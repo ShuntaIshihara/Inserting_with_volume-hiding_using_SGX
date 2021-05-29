@@ -1,19 +1,32 @@
 // #include "Enclave_t.h"
 // #include <sgx_trts.h>
+#include <iostream>
 #include <random>
-#include "classes.h"
+#include <functional>
+#include <cmath>
+#include <string>
+#include <set>
+#include "keyvalue.hpp"
 
-template <class KeyType> KeyType decrypt(KeyType key) {
+
+std::string decrypt(std::string key)
+{
     return key;
 }
 
-template <class KeyType> int hash_1(KeyType key) {
+//keyはstring型として作成
+int hash_1(std::string key, int size)
+{
+    return std::abs((int)std::hash<std::string>()(key)) % size;
 }
 
-template <class KeyType> int hash_2(KeyType key) {
+int hash_2(std::string key, int size)
+{
+    key += "t2";
+    return std::abs((int)std::hash<std::string>()(key)) % size;
 }
 
-template <class KeyValue> KeyValue cuckoo(KeyValue data, KeyValue[][] table, int size, int tableID, int cnt, int limit)
+template <class KeyValue> KeyValue cuckoo(KeyValue data, KeyValue table[2][10], int size, int tableID, int cnt, int limit)
 {
     //再帰回数の上限に達したらreturnする
     if (cnt >= limit) return data;
@@ -31,10 +44,12 @@ template <class KeyValue> KeyValue cuckoo(KeyValue data, KeyValue[][] table, int
     return cuckoo(w, table, size, (tableID+1)%2, cnt+1, limit);
 }
 
-template <class KeyValue> int ecall_start(KeyValue data, KeyValue table[][], int size)
+template <class KeyValue> int ecall_start(KeyValue data, KeyValue table[2][10], int size)
 {
+    std::set<KeyValue> stash;
+
     //新しいキーバリューデータを挿入し，托卵操作を行う
-    stash.put(cuckoo(data, table, size, 0, 0, 5));
+    stash.insert(cuckoo(data, table, size, 0, 0, 5));
     
     //ランダムな名前のキーを生成する
     std::random_device rnd;
@@ -43,11 +58,12 @@ template <class KeyValue> int ecall_start(KeyValue data, KeyValue table[][], int
     key += std::to_string(r);
     KeyValue dummy(key);
     //ダミーデータを挿入し，托卵操作を行う
-    stash.put(cuckoo(dummy, table, size, 0, 0, 5));
+    stash.insert(cuckoo(dummy, table, size, 0, 0, 5));
 
     //stashをenclave外に送る
-    ocall_return_stash();
+    int flag = ocall_return_stash(stash);
+    if (flag) std::cout << "ocall success" << std::endl;
+    else std::cout << "ocall fail" << std::endl;
+
     return 1;
 }
-
-
