@@ -28,7 +28,7 @@ class KV {
         this->value = value;
     }
     
-    std::string getKey()
+    std::string getKey() const
     {
         return this->key;
     }

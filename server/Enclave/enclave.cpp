@@ -8,6 +8,7 @@
 #include <set>
 #include "keyvalue.hpp"
 
+int ocall_return_stash(std::set<KV> st);
 
 std::string decrypt(std::string key)
 {
@@ -26,10 +27,10 @@ int hash_2(std::string key, int size)
     return std::abs((int)std::hash<std::string>()(key)) % size;
 }
 
-KV* cuckoo(KV *data, KV *table, int size, int tableID, int cnt, int limit)
+KV cuckoo(KV *data, KV *table, int size, int tableID, int cnt, int limit)
 {
     //再帰回数の上限に達したらreturnする
-    if (cnt >= limit) return data;
+    if (cnt >= limit) return *data;
 
     //T1, T2それぞれのhash値を得る
     int pos[2];
@@ -50,7 +51,7 @@ int ecall_start(KV *data, KV *table, int *size)
     std::set<KV> stash;
 
     //新しいキーバリューデータを挿入し，托卵操作を行う
-    stash.insert(*(cuckoo(data, (KV*)table, *size, 0, 0, 5)));
+    stash.insert(cuckoo(data, (KV*)table, *size, 0, 0, 5));
     
     //ランダムな名前のキーを生成する
     std::random_device rnd;
@@ -59,7 +60,7 @@ int ecall_start(KV *data, KV *table, int *size)
     key += std::to_string(r);
     KV dummy(key);
     //ダミーデータを挿入し，托卵操作を行う
-    stash.insert(*(cuckoo(&dummy, (KV*)table, *size, 0, 0, 5)));
+    stash.insert(cuckoo(&dummy, (KV*)table, *size, 0, 0, 5));
 
   //stashをenclave外に送る
     int flag = ocall_return_stash(stash);
