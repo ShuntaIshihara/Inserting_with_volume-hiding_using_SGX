@@ -51,7 +51,12 @@ int ecall_start(KV *data, KV *table, int *size)
     std::set<KV> stash;
 
     //新しいキーバリューデータを挿入し，托卵操作を行う
-    stash.insert(cuckoo(data, (KV*)table, *size, 0, 0, 5));
+    KV w = cuckoo(data, (KV*)table, *size, 0, 0, 5);
+    std::string str = w.getKey();
+    if (str.find("dummy_") == std::string::npos) {
+        std::cout << w.getKey() << std::endl;
+        stash.insert(w);
+    }
     
     //ランダムな名前のキーを生成する
     std::random_device rnd;
@@ -60,12 +65,19 @@ int ecall_start(KV *data, KV *table, int *size)
     key += std::to_string(r);
     KV dummy(key);
     //ダミーデータを挿入し，托卵操作を行う
-    stash.insert(cuckoo(&dummy, (KV*)table, *size, 0, 0, 5));
+    w = cuckoo(&dummy, (KV*)table, *size, 0, 0, 5);
+    str = w.getKey();
+    if (str.find("dummy_") == std::string::npos) {
+        std::cout << w.getKey() << std::endl;
+        stash.insert(w);
+    }
 
   //stashをenclave外に送る
-    int flag = ocall_return_stash(stash);
-    if (flag) std::cout << "ocall success" << std::endl;
-    else std::cout << "ocall fail" << std::endl;
+    if (!stash.empty()) {
+        int flag = ocall_return_stash(stash);
+        if (flag) std::cout << "ocall success" << std::endl;
+        else std::cout << "ocall fail" << std::endl;
+    }
 
     return 1;
 }

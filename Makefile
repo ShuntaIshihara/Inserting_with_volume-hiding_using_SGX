@@ -14,9 +14,9 @@ test_stash.o:
 test_cuckoo: test_cuckoo.o server/Enclave/enclave.o
 	$(CXX) -o $@ $^
 
-server/Enclave/enclave.o: server/Enclave/enclave.cpp
-	@[ -d ./server/Enclave ]
-	$(CXX) -o $@ -c $< -I /Users/ishihara/Desktop/Inserting_with_volume-hiding_using_SGX/server
+#server/Enclave/enclave.o: server/Enclave/enclave.cpp
+#	@[ -d ./server/Enclave ]
+#	$(CXX) -o $@ -c $< -I /Users/ishihara/Desktop/Inserting_with_volume-hiding_using_SGX/server
 
 test_cuckoo.o: test_cuckoo.cpp
 	$(CXX) -c $< -I /Users/ishihara/Desktop/Inserting_with_volume-hiding_using_SGX/server
