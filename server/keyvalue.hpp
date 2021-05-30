@@ -28,7 +28,7 @@ class KV {
         this->value = value;
     }
     
-    std::string getKey() const
+    std::string getKey()
     {
         return this->key;
     }
@@ -38,8 +38,8 @@ class KV {
         return this->value;
     }
 
-    bool operator < (const KV obj) const {
+    bool operator < (const KV &obj) const
+    {
         return this->key < obj.key;
     }
 };
-

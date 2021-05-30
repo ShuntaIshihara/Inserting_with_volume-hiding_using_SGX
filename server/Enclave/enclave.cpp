@@ -26,41 +26,42 @@ int hash_2(std::string key, int size)
     return std::abs((int)std::hash<std::string>()(key)) % size;
 }
 
-template <class KeyValue> KeyValue cuckoo(KeyValue data, KeyValue table[2][10], int size, int tableID, int cnt, int limit)
+KV* cuckoo(KV *data, KV *table, int size, int tableID, int cnt, int limit)
 {
     //再帰回数の上限に達したらreturnする
     if (cnt >= limit) return data;
 
     //T1, T2それぞれのhash値を得る
     int pos[2];
-    pos[0] = hash_1(decrypt(data.getKey()), size);
-    pos[1] = hash_2(decrypt(data.getKey()), size);
+    pos[0] = hash_1(decrypt(data->getKey()), size);
+    pos[1] = hash_2(decrypt(data->getKey()), size);
 
     //追い出し操作をする
-    KeyValue w = table[tableID][pos[tableID]];
-    table[tableID][pos[tableID]] = data;
+    //ポインタから二次元配列へ間接参照
+    KV w = *(table+(tableID*size)+pos[tableID]);
+    *(table+(tableID*size)+pos[tableID]) = *data;
 
     //追い出されたデータをもう一方のテーブルに移す（上の操作を再帰的に繰り返す）
-    return cuckoo(w, table, size, (tableID+1)%2, cnt+1, limit);
+    return cuckoo(&w, table, size, (tableID+1)%2, cnt+1, limit);
 }
 
-template <class KeyValue> int ecall_start(KeyValue data, KeyValue table[2][10], int size)
+int ecall_start(KV *data, KV *table, int *size)
 {
-    std::set<KeyValue> stash;
+    std::set<KV> stash;
 
     //新しいキーバリューデータを挿入し，托卵操作を行う
-    stash.insert(cuckoo(data, table, size, 0, 0, 5));
+    stash.insert(*(cuckoo(data, (KV*)table, *size, 0, 0, 5)));
     
     //ランダムな名前のキーを生成する
     std::random_device rnd;
     unsigned int r = rnd();
     std::string key = "dummy_";
     key += std::to_string(r);
-    KeyValue dummy(key);
+    KV dummy(key);
     //ダミーデータを挿入し，托卵操作を行う
-    stash.insert(cuckoo(dummy, table, size, 0, 0, 5));
+    stash.insert(*(cuckoo(&dummy, (KV*)table, *size, 0, 0, 5)));
 
-    //stashをenclave外に送る
+  //stashをenclave外に送る
     int flag = ocall_return_stash(stash);
     if (flag) std::cout << "ocall success" << std::endl;
     else std::cout << "ocall fail" << std::endl;
