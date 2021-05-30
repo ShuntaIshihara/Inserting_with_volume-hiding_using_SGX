@@ -32,17 +32,25 @@ int main()
         table[1][i].setKey(key);
     }
 
-   // std::cout << "T1 = {";
-   // for (int i = 0; i < size-1; i++) {
-   //     std::cout << table[0][i].getKey() << ", ";
-   // }
-   // std::cout << table[0][size-1].getKey() << "}" << std::endl;
+    std::cout << "===Before===" << std::endl;
+    std::cout << "T1 = {";
+    for (int i = 0; i < size-1; i++) {
+        std::cout << table[0][i].getKey() << ", ";
+    }
+    std::cout << table[0][size-1].getKey() << "}" << std::endl;
 
-   // std::cout << "T2 = {";
-   // for (int i = 0; i < size-1; i++) {
-   //     std::cout << table[1][i].getKey() << ", ";
-   // }
-   // std::cout << table[1][size-1].getKey() << "}" << std::endl;
+    std::cout << "T2 = {";
+    for (int i = 0; i < size-1; i++) {
+        std::cout << table[1][i].getKey() << ", ";
+    }
+    std::cout << table[1][size-1].getKey() << "}" << std::endl;
+
+    std::cout << "stash = {";
+    for (auto itr = stash.begin(); itr != stash.end(); itr++) {
+        std::cout << itr->getKey() << ", ";
+    }
+    std::cout << "}" << std::endl;
+
 
     for (int i = 0; i < size; i++) {
         std::string key = "key";
@@ -53,6 +61,7 @@ int main()
         ecall_start(&data, (KV*)table, &size);
     }
 
+    std::cout << "===After===" << std::endl;
     std::cout << "T1 = {";
     for (int i = 0; i < size-1; i++) {
         std::cout << table[0][i].getKey() << ", ";

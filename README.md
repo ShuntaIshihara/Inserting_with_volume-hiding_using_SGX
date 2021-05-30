@@ -26,5 +26,16 @@ Enclave内で托卵操作を行う
 - 入れ替え操作
     - 追い出されたデータをcuckoo関数に渡す
 
+### cuckoo hashingの動作のテスト（SGXなし）
+```zsh
+===Before===
+T1 = {dummy_0, dummy_1, dummy_2, dummy_3, dummy_4, dummy_5, dummy_6, dummy_7, dummy_8, dummy_9}
+T2 = {dummy_01, dummy_11, dummy_21, dummy_31, dummy_41, dummy_51, dummy_61, dummy_71, dummy_81, dummy_91}
+stash = {}
+===After===
+T1 = {dummy_1217561367, dummy_81, dummy_3945025673, dummy_4, dummy_1699515842, dummy_9, dummy_1620770490, key0, dummy_31, dummy_2439117702}
+T2 = {dummy_21, dummy_2, key6, key7, key4, dummy_51, dummy_11, key9, dummy_546934652, dummy_615570064}
+stash = {key1, key2, key3, key5, key8, }
+```
 ## 疑問点
 - stashに入れるデータをクライアントに返す時，ダミーデータも混ぜたほうがいいのか

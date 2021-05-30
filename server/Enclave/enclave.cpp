@@ -1,6 +1,5 @@
 // #include "Enclave_t.h"
 // #include <sgx_trts.h>
-#include <iostream>
 #include <random>
 #include <functional>
 #include <cmath>
@@ -10,11 +9,13 @@
 
 int ocall_return_stash(std::set<KV> *st);
 
+//decrypt関数
 std::string decrypt(std::string key)
 {
     return key;
 }
 
+//hash関数
 //keyはstring型として作成
 int hash_1(std::string key, int size)
 {
@@ -54,7 +55,6 @@ int ecall_start(KV *data, KV *table, int *size)
     KV w = cuckoo(data, (KV*)table, *size, 0, 0, 5);
     std::string str = w.getKey();
     if (str.find("dummy_") == std::string::npos) {
-        std::cout << w.getKey() << std::endl;
         stash.insert(w);
     }
     
@@ -68,16 +68,12 @@ int ecall_start(KV *data, KV *table, int *size)
     w = cuckoo(&dummy, (KV*)table, *size, 0, 0, 5);
     str = w.getKey();
     if (str.find("dummy_") == std::string::npos) {
-        std::cout << w.getKey() << std::endl;
         stash.insert(w);
     }
 
   //stashをenclave外に送る
     if (!stash.empty()) {
         int flag = ocall_return_stash(&stash);
-        if (flag) std::cout << "ocall success" << std::endl;
-        else std::cout << "ocall fail" << std::endl;
     }
-
     return 1;
 }
