@@ -23,4 +23,4 @@ test_cuckoo.o: test_cuckoo.cpp
 
 .PHONY: clean
 clean:
-	rm -f *.o test_cuckoo test_stash
+	rm -f *.o server/Enclave/*.o test_cuckoo test_stash test_hash
