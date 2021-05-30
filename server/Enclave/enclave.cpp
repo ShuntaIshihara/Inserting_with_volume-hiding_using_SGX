@@ -8,7 +8,7 @@
 #include <set>
 #include "keyvalue.hpp"
 
-int ocall_return_stash(std::set<KV> st);
+int ocall_return_stash(std::set<KV> *st);
 
 std::string decrypt(std::string key)
 {
@@ -74,7 +74,7 @@ int ecall_start(KV *data, KV *table, int *size)
 
   //stashをenclave外に送る
     if (!stash.empty()) {
-        int flag = ocall_return_stash(stash);
+        int flag = ocall_return_stash(&stash);
         if (flag) std::cout << "ocall success" << std::endl;
         else std::cout << "ocall fail" << std::endl;
     }

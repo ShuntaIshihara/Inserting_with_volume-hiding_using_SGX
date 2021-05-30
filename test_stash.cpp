@@ -7,9 +7,9 @@ std::set<KV> stash;
 
 int ecall_start(KV *data, KV *table, int *size);
 
-int ocall_return_stash(std::set<KV> st)
+int ocall_return_stash(std::set<KV> *st)
 {
-    for (auto itr = st.begin(); itr != st.end(); ++itr) {
+    for (auto itr = st->begin(); itr != st->end(); ++itr) {
         if (stash.find(*itr) != stash.end()) {
             stash.erase(*itr);
             stash.insert(*itr);
