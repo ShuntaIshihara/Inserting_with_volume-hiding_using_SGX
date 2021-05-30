@@ -1,0 +1,7 @@
+*.o
+server/Enclave/*.o
+server/App/*.o
+server/*.so
+test_stash
+test_cuckoo
+test_hash
