@@ -7,7 +7,7 @@ Enclave内で托卵操作を行う
 
 ### Enclave内関数
 **start関数**
-- 引数：（暗号化された）挿入するキーバリューデータ、cuckoo hashingテーブルのコピー、hash関数のseed
+- 引数：（暗号化された）挿入するキーバリューデータ、cuckoo hashingテーブルのコピー、テーブルサイズ
 - 戻り値型：int
 - cuckoo関数に挿入するキーバリューデータを渡す
     - 溢れたデータをstashに格納
@@ -18,7 +18,7 @@ Enclave内で托卵操作を行う
 - OCALLでstashをEnclave外に返す
 ---
 **cuckoo関数**
-- 引数：キーバリューデータ、cuckoo hashingテーブル、hash関数のseed、tableID、再帰回数カウント、再帰回数上限
+- 引数：キーバリューデータ、cuckoo hashingテーブル、テーブルサイズ、tableID、再帰回数カウント、再帰回数上限
 - 戻り値：溢れたデータ
 - if 再帰回数が上限に達した場合：終了
 - key値の複合
