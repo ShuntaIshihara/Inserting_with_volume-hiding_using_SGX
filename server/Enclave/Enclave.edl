@@ -1,5 +1,6 @@
 enclave
 {
+    include "keyvalue.hpp"
 	trusted
 	{
 		/*These are ECALL defines.*/
