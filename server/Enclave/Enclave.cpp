@@ -1,9 +1,9 @@
 #include "Enclave_t.h"
 #include <sgx_trts.h>
 
-int ecall_test(const char *message, size_t message_len)
+int ecall_test(struct keyvalue table[2][10], struct keyvalue *data)
 {
-	ocall_print(message);
+	table[0][5] = *data;
 
 	return 31337;
 }

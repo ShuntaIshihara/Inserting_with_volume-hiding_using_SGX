@@ -16,12 +16,16 @@
 extern "C" {
 #endif
 
-#ifndef OCALL_PRINT_DEFINED__
-#define OCALL_PRINT_DEFINED__
-void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_print, (const char* str));
+#ifndef _keyvalue
+#define _keyvalue
+typedef struct keyvalue {
+	char* key;
+	char* value;
+} keyvalue;
 #endif
 
-sgx_status_t ecall_test(sgx_enclave_id_t eid, int* retval, const char* message, size_t message_len);
+
+sgx_status_t ecall_test(sgx_enclave_id_t eid, int* retval, struct keyvalue table[2][10], struct keyvalue* data);
 
 #ifdef __cplusplus
 }

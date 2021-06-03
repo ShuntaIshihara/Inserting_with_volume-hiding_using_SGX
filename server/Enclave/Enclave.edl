@@ -1,14 +1,18 @@
 enclave
 {
+    struct keyvalue {
+        char* key;
+        char* value;
+    };
+
 	trusted
 	{
 		/*These are ECALL defines.*/
-		public int ecall_test([in, size=message_len]const char *message,
-			size_t message_len);
+		public int ecall_test([in,out]struct keyvalue table[2][10], [in]struct keyvalue *data);
 	};
+
 	untrusted
 	{
 		/*These are OCALL defines.*/
-		void ocall_print([in, string]const char *str);
 	};
 };

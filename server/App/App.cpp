@@ -10,18 +10,6 @@
 sgx_enclave_id_t global_eid = 0;
 
 
-
-/* OCALL implementations */
-void ocall_print(const char* str)
-{
-	std::cout << "Output from OCALL: " << std::endl;
-	std::cout << str << std::endl;
-	
-	return;
-}
-
-
-
 /* Enclave initialization function */
 int initialize_enclave()
 {
@@ -140,14 +128,35 @@ int main()
 
 
 	/* start ECALL */
-	const char *message = "Hello Enclave.";
-	size_t message_len = strlen(message);
+    int size = 10;
+    struct keyvalue data;
+    data.key = "key";
+    data.value = "value";
+    struct keyvalue table[2][10];
+    for (int i = 0; i < size; i++) {
+        table[0][i].key = "dummy";
+        table[1][i].key = "dummy";
+        table[0][i].value = "dummy";
+        table[1][i].value = "dummy";
+    }
 	int retval = -9999;
 
-	std::cout << "Execute ECALL.\n" << std::endl;
+    std::cout << "T1 = {";
+    for (int i = 0; i < size - 1; i++) {
+        std::cout << "(" << table[0][i].key << ", " << table[0][i].value << "), ";
+    }
+    std::cout << "(" << table[0][size-1].key << ", " << table[0][size-1].value << ")}" << std::endl;
+
+    std::cout << "T2 = {";
+    for (int i = 0; i < size - 1; i++) {
+        std::cout << "(" << table[1][i].key << ", " << table[1][i].value << "), ";
+    }
+    std::cout << "(" << table[1][size-1].key << ", " << table[1][size-1].value << ")}" << std::endl;
+
+	std::cout << "\nExecute ECALL.\n" << std::endl;
 
 	sgx_status_t status = ecall_test(global_eid, &retval,
-		message, message_len);
+		table, &data);
 
 	if(status != SGX_SUCCESS)
 	{
@@ -170,6 +179,19 @@ int main()
 
 	/* Destruct the enclave */
 	sgx_destroy_enclave(global_eid);
+
+    std::cout << "\nT1 = {";
+    for (int i = 0; i < size - 1; i++) {
+        std::cout << "(" << table[0][i].key << ", " << table[0][i].value << "), ";
+    }
+    std::cout << "(" << table[0][size-1].key << ", " << table[0][size-1].value << ")}" << std::endl;
+
+    std::cout << "T2 = {";
+    for (int i = 0; i < size - 1; i++) {
+        std::cout << "(" << table[1][i].key << ", " << table[1][i].value << "), ";
+    }
+    std::cout << "(" << table[1][size-1].key << ", " << table[1][size-1].value << ")}" << std::endl;
+
 
 	std::cout << "Whole operations have been executed correctly." << std::endl;
 
