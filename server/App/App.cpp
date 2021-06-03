@@ -153,27 +153,29 @@ int main()
     }
     std::cout << "(" << table[1][size-1].key << ", " << table[1][size-1].value << ")}" << std::endl;
 
-	std::cout << "\nExecute ECALL.\n" << std::endl;
+    for (int i = 0; i < size; i++) {
+        std::cout << "\nExecute ECALL.\n" << std::endl;
 
-	sgx_status_t status = ecall_test(global_eid, &retval,
-		table, &data);
+        sgx_status_t status = ecall_start(global_eid, &retval,
+                table, &data, &size);
 
-	if(status != SGX_SUCCESS)
-	{
-		sgx_error_print(status);
+        if(status != SGX_SUCCESS)
+        {
+            sgx_error_print(status);
 
-		return -1;
-	}
-	else
-	{
-		/* This function also can display succeeded message */
-		sgx_error_print(status);
-	}
+            return -1;
+        }
+        else
+        {
+            /* This function also can display succeeded message */
+            sgx_error_print(status);
+        }
 
 
-	/* print ECALL result */
-	std::cout << "\nReturned integer from ECALL is: " << retval << std::endl;
-	std::cout << std::endl;
+        /* print ECALL result */
+        std::cout << "\nReturned integer from ECALL is: " << retval << std::endl;
+        std::cout << std::endl;
+    }
 
 
 
