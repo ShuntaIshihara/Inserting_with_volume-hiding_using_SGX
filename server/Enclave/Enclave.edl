@@ -8,7 +8,7 @@ enclave
 	trusted
 	{
 		/*These are ECALL defines.*/
-		public int ecall_test([in,out]struct keyvalue table[2][10], [in]struct keyvalue *data);
+		public int ecall_start([in,out]struct keyvalue table[2][10], [in]struct keyvalue *data, [in]int *size);
 	};
 
 	untrusted

@@ -27,20 +27,21 @@
 )
 
 
-typedef struct ms_ecall_test_t {
+typedef struct ms_ecall_start_t {
 	int ms_retval;
 	struct keyvalue* ms_table;
 	struct keyvalue* ms_data;
-} ms_ecall_test_t;
+	int* ms_size;
+} ms_ecall_start_t;
 
-static sgx_status_t SGX_CDECL sgx_ecall_test(void* pms)
+static sgx_status_t SGX_CDECL sgx_ecall_start(void* pms)
 {
-	CHECK_REF_POINTER(pms, sizeof(ms_ecall_test_t));
+	CHECK_REF_POINTER(pms, sizeof(ms_ecall_start_t));
 	//
 	// fence after pointer checks
 	//
 	sgx_lfence();
-	ms_ecall_test_t* ms = SGX_CAST(ms_ecall_test_t*, pms);
+	ms_ecall_start_t* ms = SGX_CAST(ms_ecall_start_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
 	struct keyvalue* _tmp_table = ms->ms_table;
 	size_t _len_table = 20 * sizeof(struct keyvalue);
@@ -48,9 +49,13 @@ static sgx_status_t SGX_CDECL sgx_ecall_test(void* pms)
 	struct keyvalue* _tmp_data = ms->ms_data;
 	size_t _len_data = sizeof(struct keyvalue);
 	struct keyvalue* _in_data = NULL;
+	int* _tmp_size = ms->ms_size;
+	size_t _len_size = sizeof(int);
+	int* _in_size = NULL;
 
 	CHECK_UNIQUE_POINTER(_tmp_table, _len_table);
 	CHECK_UNIQUE_POINTER(_tmp_data, _len_data);
+	CHECK_UNIQUE_POINTER(_tmp_size, _len_size);
 
 	//
 	// fence after pointer checks
@@ -88,8 +93,26 @@ static sgx_status_t SGX_CDECL sgx_ecall_test(void* pms)
 		}
 
 	}
+	if (_tmp_size != NULL && _len_size != 0) {
+		if ( _len_size % sizeof(*_tmp_size) != 0)
+		{
+			status = SGX_ERROR_INVALID_PARAMETER;
+			goto err;
+		}
+		_in_size = (int*)malloc(_len_size);
+		if (_in_size == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-	ms->ms_retval = ecall_test((struct keyvalue (*)[10])_in_table, _in_data);
+		if (memcpy_s(_in_size, _len_size, _tmp_size, _len_size)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
+
+	ms->ms_retval = ecall_start((struct keyvalue (*)[10])_in_table, _in_data, _in_size);
 	if (_in_table) {
 		if (memcpy_s(_tmp_table, _len_table, _in_table, _len_table)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -100,6 +123,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_test(void* pms)
 err:
 	if (_in_table) free(_in_table);
 	if (_in_data) free(_in_data);
+	if (_in_size) free(_in_size);
 	return status;
 }
 
@@ -109,7 +133,7 @@ SGX_EXTERNC const struct {
 } g_ecall_table = {
 	1,
 	{
-		{(void*)(uintptr_t)sgx_ecall_test, 0, 0},
+		{(void*)(uintptr_t)sgx_ecall_start, 0, 0},
 	}
 };
 

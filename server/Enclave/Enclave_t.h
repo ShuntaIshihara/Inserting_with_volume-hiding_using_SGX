@@ -23,7 +23,7 @@ typedef struct keyvalue {
 } keyvalue;
 #endif
 
-int ecall_test(struct keyvalue table[2][10], struct keyvalue* data);
+int ecall_start(struct keyvalue table[2][10], struct keyvalue* data, int* size);
 
 
 #ifdef __cplusplus
