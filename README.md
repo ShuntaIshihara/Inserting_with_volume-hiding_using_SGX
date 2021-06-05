@@ -26,7 +26,7 @@ Enclave内で托卵操作を行う
 - 入れ替え操作
     - 追い出されたデータをcuckoo関数に渡す
 
-### cuckoo hashingの動作のテスト（SGXなし）
+### cuckoo hashingの動作のテスト（stashなし）
 ```bash
 T1 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
 T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
