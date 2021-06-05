@@ -99,7 +99,7 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
+T1 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
 T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
 
 Insert data (key_5, value_5)
@@ -113,7 +113,7 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_5, value_5), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
+T1 = {(key_5, value_5), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
 
 Insert data (key_6, value_6)
@@ -127,7 +127,7 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_6, value_6), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
+T1 = {(key_6, value_6), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_5, value_5), (dummy, dummy)}
 
 Insert data (key_7, value_7)
@@ -141,7 +141,7 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
+T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_5, value_5), (dummy, dummy)}
 
 Insert data (key_8, value_8)
@@ -155,7 +155,7 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
+T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_8, value_8), (key_5, value_5), (dummy, dummy)}
 
 Insert data (key_9, value_9)
@@ -169,11 +169,10 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_5, value_5), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_9, value_9), (dummy, dummy), (dummy, dummy)}
+T1 = {(key_5, value_5), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_9, value_9), (dummy, dummy), (key_4, value_4)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_6, value_6), (key_8, value_8), (key_0, value_0), (dummy, dummy)}
 
 Whole operations have been executed correctly.
-
 ```
 ### 実装メモ
 - 多次元配列のポインタを引数で渡してしまうと先頭のアドレスしかエンクレーブにコピーされないので，きちんと配列を渡す（サイズを指定する必要がある）
