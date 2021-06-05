@@ -160,6 +160,7 @@ int main()
         std::strcpy(data.key, key.c_str());
         std::strcpy(data.value, value.c_str());
 
+        std::cout << "\nInsert data (" << data.key << ", " << data.value << ")" << std::endl;
         std::cout << "\nExecute ECALL.\n" << std::endl;
 
         sgx_status_t status = ecall_start(global_eid, &retval,
@@ -180,7 +181,18 @@ int main()
 
         /* print ECALL result */
         std::cout << "\nReturned integer from ECALL is: " << retval << std::endl;
-        std::cout << std::endl;
+        
+        std::cout << "\nT1 = {";
+        for (int i = 0; i < size - 1; i++) {
+            std::cout << "(" << table[0][i].key << ", " << table[0][i].value << "), ";
+        }
+        std::cout << "(" << table[0][size-1].key << ", " << table[0][size-1].value << ")}" << std::endl;
+
+        std::cout << "T2 = {";
+        for (int i = 0; i < size - 1; i++) {
+            std::cout << "(" << table[1][i].key << ", " << table[1][i].value << "), ";
+        }
+        std::cout << "(" << table[1][size-1].key << ", " << table[1][size-1].value << ")}" << std::endl;
     }
 
 
@@ -188,20 +200,8 @@ int main()
 	/* Destruct the enclave */
 	sgx_destroy_enclave(global_eid);
 
-    std::cout << "\nT1 = {";
-    for (int i = 0; i < size - 1; i++) {
-        std::cout << "(" << table[0][i].key << ", " << table[0][i].value << "), ";
-    }
-    std::cout << "(" << table[0][size-1].key << ", " << table[0][size-1].value << ")}" << std::endl;
 
-    std::cout << "T2 = {";
-    for (int i = 0; i < size - 1; i++) {
-        std::cout << "(" << table[1][i].key << ", " << table[1][i].value << "), ";
-    }
-    std::cout << "(" << table[1][size-1].key << ", " << table[1][size-1].value << ")}" << std::endl;
-
-
-	std::cout << "Whole operations have been executed correctly." << std::endl;
+	std::cout << "\nWhole operations have been executed correctly." << std::endl;
 
 	return 0;
 }
