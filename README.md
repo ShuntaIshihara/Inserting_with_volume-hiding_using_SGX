@@ -27,6 +27,7 @@ Enclave内で托卵操作を行う
     - 追い出されたデータをcuckoo関数に渡す
 
 ### cuckoo hashingの動作のテスト（stashなし）
+{(key_0, value_0), (key_1, value_1), ... , (key_9, value_9)}の10個のデータを挿入テスト
 ```bash
 T1 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
 T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
