@@ -2,7 +2,8 @@
 #include <sgx_trts.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/sha.h>
+//#include <openssl/sha.h>
+#include <sgx_tcrypto.h>
 
 char* decrypt(char* key)
 {
@@ -11,35 +12,39 @@ char* decrypt(char* key)
 
 int hash_1(char* key, int size)
 {
-    unsigned char digest[SHA256_DIGEST_LENGTH];
+//    unsigned char digest[SHA256_DIGEST_LENGTH];
 
-    SHA256_CTX sha_ctx;
-    SHA256_Init(&sha_ctx);
-    SHA256_Update(&sha_ctx, key, sizeof(key));
-    SHA256_Final(digest, &sha_ctx);
+//    SHA256_CTX sha_ctx;
+//    SHA256_Init(&sha_ctx);
+//    SHA256_Update(&sha_ctx, key, sizeof(key));
+//    SHA256_Final(digest, &sha_ctx);
+    sgx_sha256_hash_t *hash = (sgx_sha256_hash_t *)malloc(sizeof(sgx_sha256_hash_t));
+    sgx_status_t status = sgx_sha256_msg((const uint8_t *) key, sizeof(key), (sgx_sha256_hash_t *) hash);
     
     int h = 0;
-    for (int i = 0; i < sizeof(digest); i++) {
-        h += (int)digest[i];
+    for (int i = 0; i < (int)sizeof(hash); i++) {
+        h += (int)*hash[i];
     }
-
     return h % size;
 }
 
 int hash_2(char* key, int size)
 {
-    char key2[30] = "t2";
-    strcat(key2, key);
-    unsigned char digest[SHA256_DIGEST_LENGTH];
-
-    SHA256_CTX sha_ctx;
-    SHA256_Init(&sha_ctx);
-    SHA256_Update(&sha_ctx, key2, sizeof(key2));
-    SHA256_Final(digest, &sha_ctx);
+    char key2[32] = "t2";
+    strncat(key2, key, 30);
+//    unsigned char digest[SHA256_DIGEST_LENGTH];
+//
+//    SHA256_CTX sha_ctx;
+//    SHA256_Init(&sha_ctx);
+//    SHA256_Update(&sha_ctx, key2, sizeof(key2));
+//    SHA256_Final(digest, &sha_ctx);
+    
+    sgx_sha256_hash_t *hash = (sgx_sha256_hash_t *)malloc(sizeof(sgx_sha256_hash_t));
+    sgx_status_t status = sgx_sha256_msg((const uint8_t *) key2, sizeof(key2), (sgx_sha256_hash_t *) hash);
     
     int h = 0;
-    for (int i = 0; i < sizeof(digest); i++) {
-        h += (int)digest[i];
+    for (int i = 0; i < (int)sizeof(hash); i++) {
+        h += (int)*hash[i];
     }
 
     return h % size;

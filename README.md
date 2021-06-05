@@ -27,15 +27,119 @@ Enclave内で托卵操作を行う
     - 追い出されたデータをcuckoo関数に渡す
 
 ### cuckoo hashingの動作のテスト（SGXなし）
-```zsh
-===Before===
-T1 = {dummy_0, dummy_1, dummy_2, dummy_3, dummy_4, dummy_5, dummy_6, dummy_7, dummy_8, dummy_9}
-T2 = {dummy_01, dummy_11, dummy_21, dummy_31, dummy_41, dummy_51, dummy_61, dummy_71, dummy_81, dummy_91}
-stash = {}
-===After===
-T1 = {dummy_1217561367, dummy_81, dummy_3945025673, dummy_4, dummy_1699515842, dummy_9, dummy_1620770490, key0, dummy_31, dummy_2439117702}
-T2 = {dummy_21, dummy_2, key6, key7, key4, dummy_51, dummy_11, key9, dummy_546934652, dummy_615570064}
-stash = {key1, key2, key3, key5, key8, }
+```bash
+T1 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+Execute ECALL.
+
+=============================================================================
+SGX_SUCCESS
+Exited SGX function successfully.
+=============================================================================
+
+Returned integer from ECALL is: 1
+
+
+T1 = {(dummy, dummy), (dummy, dummy), (key_2, value_2), (key_9, value_9), (dummy, dummy), (key_4, value_4), (key_5, value_5), (key_7, value_7), (dummy, dummy), (key_3, value_3)}
+T2 = {(dummy, dummy), (dummy, dummy), (key_6, value_6), (key_8, value_8), (key_0, value_0), (dummy, dummy), (key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+Whole operations have been executed correctly.
 ```
+### 実装メモ
+- 多次元配列のポインタを引数で渡してしまうと先頭のアドレスしかエンクレーブにコピーされないので，きちんと配列を渡す（サイズを指定する必要がある）
+- c++オブジェクトを引数として渡すことができない（p90 https://01.org/sites/default/files/documentation/intel_sgx_sdk_developer_reference_for_linux_os_pdf.pdf)
+- edlファイルに構造体の定義を書けばエンクレーブ，エンクレーブ外の両方のコードで使える（たぶんMakefileでリンクされているファイルのみ）
+- エンクレーブ内でsha256を生成するには<sgx_tcrypto.h>をインクルードする（エンクレーブ内で使える専用のライブラリが用意されている）
+- エンクレーブ内ではstring型などは使えない（基本cのみ）
 ## 疑問点
 - stashに入れるデータをクライアントに返す時，ダミーデータも混ぜたほうがいいのか

@@ -18,8 +18,8 @@ extern "C" {
 #ifndef _keyvalue
 #define _keyvalue
 typedef struct keyvalue {
-	char* key;
-	char* value;
+	char key[32];
+	char value[32];
 } keyvalue;
 #endif
 

@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstring>
+#include <string>
 #include <iostream>
 #include "Enclave_u.h"
 #include <sgx_urts.h>
@@ -129,15 +130,12 @@ int main()
 
 	/* start ECALL */
     int size = 10;
-    struct keyvalue data;
-    data.key = "key";
-    data.value = "value";
     struct keyvalue table[2][10];
     for (int i = 0; i < size; i++) {
-        table[0][i].key = "dummy";
-        table[1][i].key = "dummy";
-        table[0][i].value = "dummy";
-        table[1][i].value = "dummy";
+        std::strcpy(table[0][i].key, "dummy");
+        std::strcpy(table[1][i].key, "dummy");
+        std::strcpy(table[0][i].value, "dummy");
+        std::strcpy(table[1][i].value, "dummy");
     }
 	int retval = -9999;
 
@@ -154,6 +152,14 @@ int main()
     std::cout << "(" << table[1][size-1].key << ", " << table[1][size-1].value << ")}" << std::endl;
 
     for (int i = 0; i < size; i++) {
+        struct keyvalue data;
+        std::string key = "key_";
+        std::string value = "value_";
+        key += std::to_string(i);
+        value += std::to_string(i);
+        std::strcpy(data.key, key.c_str());
+        std::strcpy(data.value, value.c_str());
+
         std::cout << "\nExecute ECALL.\n" << std::endl;
 
         sgx_status_t status = ecall_start(global_eid, &retval,

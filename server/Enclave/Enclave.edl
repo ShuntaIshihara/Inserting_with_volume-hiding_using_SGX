@@ -1,8 +1,8 @@
 enclave
 {
     struct keyvalue {
-        char* key;
-        char* value;
+        char key[32];
+        char value[32];
     };
 
 	trusted
