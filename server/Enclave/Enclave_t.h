@@ -18,12 +18,12 @@ extern "C" {
 #ifndef _keyvalue
 #define _keyvalue
 typedef struct keyvalue {
-	char* key;
-	char* value;
+	char key[32];
+	char value[32];
 } keyvalue;
 #endif
 
-int ecall_test(struct keyvalue table[2][10], struct keyvalue* data);
+int ecall_start(struct keyvalue table[2][10], struct keyvalue* data, int* size);
 
 
 #ifdef __cplusplus

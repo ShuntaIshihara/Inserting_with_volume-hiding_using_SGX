@@ -19,13 +19,13 @@ extern "C" {
 #ifndef _keyvalue
 #define _keyvalue
 typedef struct keyvalue {
-	char* key;
-	char* value;
+	char key[32];
+	char value[32];
 } keyvalue;
 #endif
 
 
-sgx_status_t ecall_test(sgx_enclave_id_t eid, int* retval, struct keyvalue table[2][10], struct keyvalue* data);
+sgx_status_t ecall_start(sgx_enclave_id_t eid, int* retval, struct keyvalue table[2][10], struct keyvalue* data, int* size);
 
 #ifdef __cplusplus
 }
