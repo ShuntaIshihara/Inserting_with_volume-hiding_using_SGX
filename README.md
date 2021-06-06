@@ -36,6 +36,7 @@ Insert data (key_0, value_0)
 
 Execute ECALL.
 
+stash = {(dummy, dummy), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -50,6 +51,7 @@ Insert data (key_1, value_1)
 
 Execute ECALL.
 
+stash = {(dummy, dummy), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -64,6 +66,7 @@ Insert data (key_2, value_2)
 
 Execute ECALL.
 
+stash = {(dummy, dummy), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -78,6 +81,7 @@ Insert data (key_3, value_3)
 
 Execute ECALL.
 
+stash = {(dummy, dummy), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -92,6 +96,7 @@ Insert data (key_4, value_4)
 
 Execute ECALL.
 
+stash = {(key_4, value_4), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -99,13 +104,14 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
+T1 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
 T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
 
 Insert data (key_5, value_5)
 
 Execute ECALL.
 
+stash = {(dummy, dummy), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -113,13 +119,14 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_5, value_5), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
+T1 = {(key_5, value_5), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
 
 Insert data (key_6, value_6)
 
 Execute ECALL.
 
+stash = {(dummy, dummy), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -127,13 +134,14 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_6, value_6), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
+T1 = {(key_6, value_6), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_5, value_5), (dummy, dummy)}
 
 Insert data (key_7, value_7)
 
 Execute ECALL.
 
+stash = {(dummy, dummy), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -141,13 +149,14 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
+T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_5, value_5), (dummy, dummy)}
 
 Insert data (key_8, value_8)
 
 Execute ECALL.
 
+stash = {(dummy, dummy), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -155,13 +164,14 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (key_4, value_4)}
+T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_8, value_8), (key_5, value_5), (dummy, dummy)}
 
 Insert data (key_9, value_9)
 
 Execute ECALL.
 
+stash = {(dummy, dummy), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -169,7 +179,7 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_5, value_5), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_9, value_9), (dummy, dummy), (key_4, value_4)}
+T1 = {(key_5, value_5), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_9, value_9), (dummy, dummy), (dummy, dummy)}
 T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_6, value_6), (key_8, value_8), (key_0, value_0), (dummy, dummy)}
 
 Whole operations have been executed correctly.
