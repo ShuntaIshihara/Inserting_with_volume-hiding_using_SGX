@@ -69,10 +69,18 @@ struct keyvalue cuckoo(struct keyvalue table[2][10], struct keyvalue data, int s
 
 int ecall_start(struct keyvalue table[2][10], struct keyvalue *data, int *size)
 {
-	struct keyvalue stash;
+	struct keyvalue stash[2];
 
     //新しいキーバリューデータを挿入し、托卵操作を行う
-    stash = cuckoo(table, *data, *size, 0, 0, 5);
+    stash[0] = cuckoo(table, *data, *size, 0, 0, 5);
+
+    //ランダムなキーバリューデータ（ダミーデータ）を生成
+    //ダミーデータを挿入し、托卵操作を行う
+    strcpy(stash[1].key, "dummy");
+    strcpy(stash[1].value, "dummy");
+
+    //OCALLでstashに格納するものをクライアントに返す
+    ocall_return_stash(stash);
 
 	return 1;
 }
