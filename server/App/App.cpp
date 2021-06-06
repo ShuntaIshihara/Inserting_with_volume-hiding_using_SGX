@@ -16,6 +16,7 @@ void ocall_return_stash(struct keyvalue stash[2])
     std::cout << "stash = {";
     std::cout << "(" << stash[0].key << ", " << stash[0].value << "), ";
     std::cout << "(" << stash[1].key << ", " << stash[1].value << ")}";
+    std::cout << std::endl;
 }
 
 /* Enclave initialization function */

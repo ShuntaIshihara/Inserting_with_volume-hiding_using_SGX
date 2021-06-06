@@ -76,8 +76,8 @@ int ecall_start(struct keyvalue table[2][10], struct keyvalue *data, int *size)
 
     //ランダムなキーバリューデータ（ダミーデータ）を生成
     //ダミーデータを挿入し、托卵操作を行う
-    strcpy(stash[1].key, "dummy");
-    strcpy(stash[1].value, "dummy");
+    strlcpy(stash[1].key, "dummy", 32);
+    strlcpy(stash[1].value, "dummy", 32);
 
     //OCALLでstashに格納するものをクライアントに返す
     ocall_return_stash(stash);
