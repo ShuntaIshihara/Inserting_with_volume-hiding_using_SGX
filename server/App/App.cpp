@@ -10,6 +10,13 @@
 
 sgx_enclave_id_t global_eid = 0;
 
+//OCALL implementation
+void ocall_return_stash(struct keyvalue stash[2])
+{
+    std::cout << "stash = {";
+    std::cout << "(" << stash[0].key << ", " << stash[0].value << "), ";
+    std::cout << "(" << stash[1].key << ", " << stash[1].value << ")}";
+}
 
 /* Enclave initialization function */
 int initialize_enclave()

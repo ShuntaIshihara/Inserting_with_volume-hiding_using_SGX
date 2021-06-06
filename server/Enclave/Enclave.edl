@@ -14,5 +14,6 @@ enclave
 	untrusted
 	{
 		/*These are OCALL defines.*/
+        void ocall_return_stash([in]struct keyvalue stash[2]);
 	};
 };
