@@ -24,6 +24,10 @@ typedef struct keyvalue {
 } keyvalue;
 #endif
 
+#ifndef OCALL_RETURN_STASH_DEFINED__
+#define OCALL_RETURN_STASH_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_return_stash, (struct keyvalue stash[2]));
+#endif
 
 sgx_status_t ecall_start(sgx_enclave_id_t eid, int* retval, struct keyvalue table[2][10], struct keyvalue* data, int* size);
 
