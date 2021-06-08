@@ -140,10 +140,16 @@ int main()
     int size = 10;
     struct keyvalue table[2][10];
     for (int i = 0; i < size; i++) {
-        std::strcpy(table[0][i].key, "dummy");
-        std::strcpy(table[1][i].key, "dummy");
-        std::strcpy(table[0][i].value, "dummy");
-        std::strcpy(table[1][i].value, "dummy");
+        std::string key = "dummy_";
+        std::string value = "dummy_";
+        key += std::to_string(i);
+        value += std::to_string(i);
+        std::strcpy(table[0][i].key, key.c_str());
+        std::strcpy(table[0][i].value, key.c_str());
+        key += std::to_string(i);
+        value += std::to_string(i);
+        std::strcpy(table[1][i].key, value.c_str());
+        std::strcpy(table[1][i].value, value.c_str());
     }
 	int retval = -9999;
 

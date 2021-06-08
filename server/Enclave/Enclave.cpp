@@ -21,11 +21,9 @@ int hash_1(char* key, int size)
     sgx_sha256_hash_t *hash = (sgx_sha256_hash_t *)malloc(sizeof(sgx_sha256_hash_t));
     sgx_status_t status = sgx_sha256_msg((const uint8_t *) key, sizeof(key), (sgx_sha256_hash_t *) hash);
     
-    int h = 0;
-    for (int i = 0; i < (int)sizeof(hash); i++) {
-        h += (int)*hash[i];
-    }
-    return h % size;
+    int *h = (int *)hash;
+    free(hash);
+    return *h % size;
 }
 
 int hash_2(char* key, int size)
@@ -42,12 +40,9 @@ int hash_2(char* key, int size)
     sgx_sha256_hash_t *hash = (sgx_sha256_hash_t *)malloc(sizeof(sgx_sha256_hash_t));
     sgx_status_t status = sgx_sha256_msg((const uint8_t *) key2, sizeof(key2), (sgx_sha256_hash_t *) hash);
     
-    int h = 0;
-    for (int i = 0; i < (int)sizeof(hash); i++) {
-        h += (int)*hash[i];
-    }
-
-    return h % size;
+    int *h = (int *)hash;
+    free(hash);
+    return *h % size;
 }
 
 struct keyvalue cuckoo(struct keyvalue table[2][10], struct keyvalue data, int size, int tableID, int cnt, int limit)
@@ -60,8 +55,13 @@ struct keyvalue cuckoo(struct keyvalue table[2][10], struct keyvalue data, int s
     pos[1] = hash_2(decrypt(data.key), size);
 
     //追い出し操作をする
-    struct keyvalue w = table[tableID][pos[tableID]];
-    table[tableID][pos[tableID]] = data;
+//    struct keyvalue w = table[tableID][pos[tableID]];
+//    table[tableID][pos[tableID]] = data;
+    struct keyvalue w;
+    strlcpy(w.key, table[tableID][pos[tableID]].key, 32);
+    strlcpy(w.value, table[tableID][pos[tableID]].value, 32);
+    strlcpy(table[tableID][pos[tableID]].key, data.key, 32);
+    strlcpy(table[tableID][pos[tableID]].value, data.value, 32);
 
     //追い出されたデータをもう一方のテーブルに移す
     return cuckoo(table, w, size, (tableID+1)%2, cnt+1, limit);
