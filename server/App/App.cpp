@@ -11,8 +11,17 @@
 sgx_enclave_id_t global_eid = 0;
 
 //OCALL implementation
+
+//ハッシュ値のチェック
+void ocall_return_hash(int *h, char *key)
+{
+    std::cout << "-----check hash value-----" << std::endl;
+    std::cout << "key = " << key << std::endl;
+    std::cout << "hash value = " << h << std::endl;
+}
 void ocall_return_stash(struct keyvalue stash[2])
 {
+    std::cout << "-----check stash candidate-----" << std::endl;
     std::cout << "stash = {";
     std::cout << "(" << stash[0].key << ", " << stash[0].value << "), ";
     std::cout << "(" << stash[1].key << ", " << stash[1].value << ")}";
@@ -174,7 +183,8 @@ int main()
         std::strcpy(data.key, key.c_str());
         std::strcpy(data.value, value.c_str());
 
-        std::cout << "\nInsert data (" << data.key << ", " << data.value << ")" << std::endl;
+        std::cout << "\n-----------------------------------------" << std::endl;
+        std::cout << "Insert data (" << data.key << ", " << data.value << ")" << std::endl;
         std::cout << "\nExecute ECALL.\n" << std::endl;
 
         sgx_status_t status = ecall_start(global_eid, &retval,

@@ -23,6 +23,9 @@ int hash_1(char* key, int size)
     
     int *h = (int *)hash;
     free(hash);
+
+    ocall_check_hash(h, key);
+
     return *h % size;
 }
 
@@ -42,6 +45,9 @@ int hash_2(char* key, int size)
     
     int *h = (int *)hash;
     free(hash);
+
+    ocall_check_hash(h, key2);
+
     return *h % size;
 }
 
@@ -55,13 +61,13 @@ struct keyvalue cuckoo(struct keyvalue table[2][10], struct keyvalue data, int s
     pos[1] = hash_2(decrypt(data.key), size);
 
     //追い出し操作をする
-//    struct keyvalue w = table[tableID][pos[tableID]];
-//    table[tableID][pos[tableID]] = data;
-    struct keyvalue w;
-    strlcpy(w.key, table[tableID][pos[tableID]].key, 32);
-    strlcpy(w.value, table[tableID][pos[tableID]].value, 32);
-    strlcpy(table[tableID][pos[tableID]].key, data.key, 32);
-    strlcpy(table[tableID][pos[tableID]].value, data.value, 32);
+    struct keyvalue w = table[tableID][pos[tableID]];
+    table[tableID][pos[tableID]] = data;
+//    struct keyvalue w;
+//    strlcpy(w.key, table[tableID][pos[tableID]].key, 32);
+//    strlcpy(w.value, table[tableID][pos[tableID]].value, 32);
+//    strlcpy(table[tableID][pos[tableID]].key, data.key, 32);
+//    strlcpy(table[tableID][pos[tableID]].value, data.value, 32);
 
     //追い出されたデータをもう一方のテーブルに移す
     return cuckoo(table, w, size, (tableID+1)%2, cnt+1, limit);
