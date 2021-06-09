@@ -13,12 +13,13 @@ sgx_enclave_id_t global_eid = 0;
 //OCALL implementation
 
 //ハッシュ値のチェック
-void ocall_check_hash(int *h, char *key)
-{
-    std::cout << "-----check hash value-----" << std::endl;
-    std::cout << "key = " << key << std::endl;
-    std::cout << "hash value = " << *h << std::endl;
-}
+//void ocall_check_hash(int *h, char *key)
+//{
+//    std::cout << "-----check hash value-----" << std::endl;
+//    std::cout << "key = " << key << std::endl;
+//    std::cout << "hash value = " << *h << std::endl;
+//}
+
 void ocall_return_stash(struct keyvalue stash[2])
 {
     std::cout << "-----check stash candidate-----" << std::endl;

@@ -24,9 +24,9 @@ int hash_1(char* key, int size)
     int *h = (int *)hash;
     free(hash);
 
-    ocall_check_hash(h, key);
+//    ocall_check_hash(h, key);
 
-    return *h % size;
+    return abs(*h) % size;
 }
 
 int hash_2(char* key, int size)
@@ -46,9 +46,9 @@ int hash_2(char* key, int size)
     int *h = (int *)hash;
     free(hash);
 
-    ocall_check_hash(h, key2);
+//    ocall_check_hash(h, key2);
 
-    return *h % size;
+    return abs(*h) % size;
 }
 
 struct keyvalue cuckoo(struct keyvalue table[2][10], struct keyvalue data, int size, int tableID, int cnt, int limit)
