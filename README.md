@@ -29,14 +29,16 @@ Enclave内で托卵操作を行う
 ### cuckoo hashingの動作のテスト（stashなし）
 {(key_0, value_0), (key_1, value_1), ... , (key_9, value_9)}の10個のデータを挿入テスト
 ```bash
-T1 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
-T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_1, dummy_1), (dummy_2, dummy_2), (dummy_3, dummy_3), (dummy_4, dummy_4), (dummy_5, dummy_5), (dummy_6, dummy_6), (dummy_7, dummy_7), (dummy_8, dummy_8), (dummy_9, dummy_9)}
+T2 = {(dummy_00, dummy_00), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_33, dummy_33), (dummy_44, dummy_44), (dummy_55, dummy_55), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
 
+-----------------------------------------
 Insert data (key_0, value_0)
 
 Execute ECALL.
 
-stash = {(dummy, dummy), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(dummy_9, dummy_9), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -44,14 +46,16 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
-T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_66, dummy_66), (dummy_2, dummy_2), (dummy_3, dummy_3), (dummy_4, dummy_4), (dummy_5, dummy_5), (dummy_6, dummy_6), (key_0, value_0), (dummy_8, dummy_8), (dummy_7, dummy_7)}
+T2 = {(dummy_00, dummy_00), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_33, dummy_33), (dummy_44, dummy_44), (dummy_55, dummy_55), (dummy_1, dummy_1), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
 
+-----------------------------------------
 Insert data (key_1, value_1)
 
 Execute ECALL.
 
-stash = {(dummy, dummy), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(dummy_00, dummy_00), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -59,14 +63,16 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
-T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_66, dummy_66), (dummy_11, dummy_11), (dummy_3, dummy_3), (dummy_4, dummy_4), (dummy_5, dummy_5), (key_1, value_1), (key_0, value_0), (dummy_8, dummy_8), (dummy_7, dummy_7)}
+T2 = {(dummy_6, dummy_6), (dummy_2, dummy_2), (dummy_22, dummy_22), (dummy_33, dummy_33), (dummy_44, dummy_44), (dummy_55, dummy_55), (dummy_1, dummy_1), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
 
+-----------------------------------------
 Insert data (key_2, value_2)
 
 Execute ECALL.
 
-stash = {(dummy, dummy), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(dummy_44, dummy_44), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -74,14 +80,16 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
-T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_66, dummy_66), (dummy_11, dummy_11), (dummy_3, dummy_3), (dummy_55, dummy_55), (dummy_5, dummy_5), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_7, dummy_7)}
+T2 = {(dummy_6, dummy_6), (dummy_2, dummy_2), (dummy_22, dummy_22), (dummy_33, dummy_33), (key_1, value_1), (dummy_4, dummy_4), (dummy_1, dummy_1), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
 
+-----------------------------------------
 Insert data (key_3, value_3)
 
 Execute ECALL.
 
-stash = {(dummy, dummy), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(dummy_99, dummy_99), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -89,14 +97,16 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
-T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (dummy_11, dummy_11), (dummy_3, dummy_3), (dummy_55, dummy_55), (key_3, value_3), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_7, dummy_7)}
+T2 = {(dummy_6, dummy_6), (dummy_2, dummy_2), (dummy_22, dummy_22), (dummy_33, dummy_33), (key_1, value_1), (dummy_66, dummy_66), (dummy_1, dummy_1), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_5, dummy_5)}
 
+-----------------------------------------
 Insert data (key_4, value_4)
 
 Execute ECALL.
 
-stash = {(key_4, value_4), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(dummy_66, dummy_66), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -104,14 +114,16 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
-T2 = {(dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (dummy_11, dummy_11), (dummy_3, dummy_3), (dummy_55, dummy_55), (key_3, value_3), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_7, dummy_7)}
+T2 = {(dummy_6, dummy_6), (dummy_2, dummy_2), (dummy_22, dummy_22), (dummy_33, dummy_33), (key_1, value_1), (key_4, value_4), (dummy_1, dummy_1), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_5, dummy_5)}
 
+-----------------------------------------
 Insert data (key_5, value_5)
 
 Execute ECALL.
 
-stash = {(dummy, dummy), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(key_2, value_2), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -119,14 +131,16 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_5, value_5), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
-T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (key_5, value_5), (dummy_3, dummy_3), (dummy_33, dummy_33), (key_3, value_3), (key_1, value_1), (key_0, value_0), (dummy_8, dummy_8), (dummy_7, dummy_7)}
+T2 = {(dummy_6, dummy_6), (dummy_2, dummy_2), (dummy_22, dummy_22), (dummy_11, dummy_11), (dummy_55, dummy_55), (key_4, value_4), (dummy_1, dummy_1), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_5, dummy_5)}
 
+-----------------------------------------
 Insert data (key_6, value_6)
 
 Execute ECALL.
 
-stash = {(dummy, dummy), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(dummy_8, dummy_8), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -134,14 +148,16 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_6, value_6), (dummy, dummy), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
-T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_5, value_5), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (key_5, value_5), (dummy_3, dummy_3), (key_6, value_6), (key_3, value_3), (key_1, value_1), (key_0, value_0), (dummy_1, dummy_1), (dummy_22, dummy_22)}
+T2 = {(dummy_6, dummy_6), (dummy_2, dummy_2), (dummy_33, dummy_33), (dummy_11, dummy_11), (dummy_55, dummy_55), (key_4, value_4), (dummy_7, dummy_7), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_5, dummy_5)}
 
+-----------------------------------------
 Insert data (key_7, value_7)
 
 Execute ECALL.
 
-stash = {(dummy, dummy), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(dummy_22, dummy_22), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -149,14 +165,16 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
-T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_5, value_5), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (dummy_88, dummy_88), (dummy_3, dummy_3), (key_6, value_6), (key_3, value_3), (key_1, value_1), (key_7, value_7), (dummy_1, dummy_1), (dummy_7, dummy_7)}
+T2 = {(dummy_6, dummy_6), (dummy_2, dummy_2), (dummy_33, dummy_33), (dummy_11, dummy_11), (dummy_55, dummy_55), (key_4, value_4), (key_5, value_5), (dummy_77, dummy_77), (key_0, value_0), (dummy_5, dummy_5)}
 
+-----------------------------------------
 Insert data (key_8, value_8)
 
 Execute ECALL.
 
-stash = {(dummy, dummy), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(key_7, value_7), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -164,14 +182,16 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_6, value_6), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_0, value_0), (dummy, dummy), (dummy, dummy)}
-T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_8, value_8), (key_5, value_5), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (dummy_88, dummy_88), (dummy_3, dummy_3), (dummy_33, dummy_33), (key_8, value_8), (key_1, value_1), (dummy_6, dummy_6), (dummy_1, dummy_1), (dummy_7, dummy_7)}
+T2 = {(key_6, value_6), (dummy_2, dummy_2), (key_3, value_3), (dummy_11, dummy_11), (dummy_55, dummy_55), (key_4, value_4), (key_5, value_5), (dummy_77, dummy_77), (key_0, value_0), (dummy_5, dummy_5)}
 
+-----------------------------------------
 Insert data (key_9, value_9)
 
 Execute ECALL.
 
-stash = {(dummy, dummy), (dummy, dummy)}
+-----check stash candidate-----
+stash = {(dummy_33, dummy_33), (dummy, dummy)}
 =============================================================================
 SGX_SUCCESS
 Exited SGX function successfully.
@@ -179,8 +199,8 @@ Exited SGX function successfully.
 
 Returned integer from ECALL is: 1
 
-T1 = {(key_5, value_5), (key_7, value_7), (dummy, dummy), (key_3, value_3), (dummy, dummy), (dummy, dummy), (key_2, value_2), (key_9, value_9), (dummy, dummy), (dummy, dummy)}
-T2 = {(key_1, value_1), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (dummy, dummy), (key_6, value_6), (key_8, value_8), (key_0, value_0), (dummy, dummy)}
+T1 = {(dummy_0, dummy_0), (key_4, value_4), (dummy_88, dummy_88), (dummy_3, dummy_3), (key_6, value_6), (key_8, value_8), (key_1, value_1), (dummy_6, dummy_6), (dummy_1, dummy_1), (dummy_7, dummy_7)}
+T2 = {(key_9, value_9), (dummy_2, dummy_2), (key_3, value_3), (dummy_11, dummy_11), (dummy_55, dummy_55), (dummy_4, dummy_4), (key_5, value_5), (dummy_77, dummy_77), (key_0, value_0), (dummy_5, dummy_5)}
 
 Whole operations have been executed correctly.
 ```
