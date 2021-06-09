@@ -1,0 +1,427 @@
+T1 = {(dummy_0, dummy_0), (dummy_1, dummy_1), (dummy_2, dummy_2), (dummy_3, dummy_3), (dummy_4, dummy_4), (dummy_5, dummy_5), (dummy_6, dummy_6), (dummy_7, dummy_7), (dummy_8, dummy_8), (dummy_9, dummy_9)}
+T2 = {(dummy_00, dummy_00), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_33, dummy_33), (dummy_44, dummy_44), (dummy_55, dummy_55), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_0, value_0)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_0
+hash value = 1664847207
+-----check hash value-----
+key = t2key_0
+hash value = 333788008
+-----check hash value-----
+key = dummy_7
+hash value = -1959914709
+-----check hash value-----
+key = t2dummy_7
+hash value = -1669686546
+-----check hash value-----
+key = dummy_4
+hash value = 2080315991
+-----check hash value-----
+key = t2dummy_4
+hash value = 1232167025
+-----check hash value-----
+key = dummy_1
+hash value = 283960388
+-----check hash value-----
+key = t2dummy_1
+hash value = -837359956
+-----check hash value-----
+key = dummy_7
+hash value = -1959914709
+-----check hash value-----
+key = t2dummy_7
+hash value = -1669686546
+-----check stash candidate-----
+stash = {(, ), (dummy, dummy)}
+
+Returned integer from ECALL is: 1
+
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (dummy_2, dummy_2), (dummy_3, dummy_3), (dummy_1, dummy_1), (dummy_5, dummy_5), (dummy_6, dummy_6), (key_0, value_0), (dummy_8, dummy_8), (dummy_9, dummy_9)}
+T2 = {(dummy_00, dummy_00), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_33, dummy_33), (dummy_44, dummy_44), (dummy_55, dummy_55), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_1, value_1)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_1
+hash value = -728637706
+-----check hash value-----
+key = t2key_1
+hash value = 327501684
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = dummy_4
+hash value = 2080315991
+-----check hash value-----
+key = t2dummy_4
+hash value = 1232167025
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = dummy_4
+hash value = 2080315991
+-----check hash value-----
+key = t2dummy_4
+hash value = 1232167025
+-----check stash candidate-----
+stash = {(, ), (dummy, dummy)}
+
+Returned integer from ECALL is: 1
+
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (dummy_2, dummy_2), (dummy_3, dummy_3), (dummy_1, dummy_1), (dummy_5, dummy_5), (dummy_6, dummy_6), (key_0, value_0), (dummy_8, dummy_8), (dummy_9, dummy_9)}
+T2 = {(dummy_00, dummy_00), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_33, dummy_33), (dummy_44, dummy_44), (dummy_55, dummy_55), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_2, value_2)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_2
+hash value = 418717416
+-----check hash value-----
+key = t2key_2
+hash value = -426528848
+-----check hash value-----
+key = dummy_6
+hash value = 222072547
+-----check hash value-----
+key = t2dummy_6
+hash value = -1613796000
+-----check hash value-----
+key = dummy_00
+hash value = -1915538372
+-----check hash value-----
+key = t2dummy_00
+hash value = -1011330369
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = dummy_4
+hash value = 2080315991
+-----check hash value-----
+key = t2dummy_4
+hash value = 1232167025
+-----check stash candidate-----
+stash = {(, ), (dummy, dummy)}
+
+Returned integer from ECALL is: 1
+
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (dummy_2, dummy_2), (dummy_3, dummy_3), (dummy_1, dummy_1), (dummy_5, dummy_5), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_9, dummy_9)}
+T2 = {(dummy_6, dummy_6), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_33, dummy_33), (dummy_44, dummy_44), (dummy_55, dummy_55), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_3, value_3)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_3
+hash value = 1446822845
+-----check hash value-----
+key = t2key_3
+hash value = 540807702
+-----check hash value-----
+key = dummy_5
+hash value = 192961605
+-----check hash value-----
+key = t2dummy_5
+hash value = -1855850349
+-----check hash value-----
+key = dummy_4
+hash value = 2080315991
+-----check hash value-----
+key = t2dummy_4
+hash value = 1232167025
+-----check hash value-----
+key = dummy_5
+hash value = 192961605
+-----check hash value-----
+key = t2dummy_5
+hash value = -1855850349
+-----check hash value-----
+key = dummy_4
+hash value = 2080315991
+-----check hash value-----
+key = t2dummy_4
+hash value = 1232167025
+-----check stash candidate-----
+stash = {(dummy_5, dummy_5), (dummy, dummy)}
+
+Returned integer from ECALL is: 1
+
+T1 = {(dummy_0, dummy_0), (dummy_4, dummy_4), (dummy_2, dummy_2), (dummy_3, dummy_3), (dummy_1, dummy_1), (key_3, value_3), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_9, dummy_9)}
+T2 = {(dummy_6, dummy_6), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_33, dummy_33), (dummy_44, dummy_44), (dummy_55, dummy_55), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_4, value_4)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_4
+hash value = 544018371
+-----check hash value-----
+key = t2key_4
+hash value = 1409296695
+-----check hash value-----
+key = dummy_4
+hash value = 2080315991
+-----check hash value-----
+key = t2dummy_4
+hash value = 1232167025
+-----check hash value-----
+key = dummy_55
+hash value = -466149744
+-----check hash value-----
+key = t2dummy_55
+hash value = 642878964
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = key_4
+hash value = 544018371
+-----check hash value-----
+key = t2key_4
+hash value = 1409296695
+-----check stash candidate-----
+stash = {(, ), (dummy, dummy)}
+
+Returned integer from ECALL is: 1
+
+T1 = {(dummy_0, dummy_0), (key_4, value_4), (dummy_2, dummy_2), (dummy_3, dummy_3), (dummy_1, dummy_1), (key_3, value_3), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_9, dummy_9)}
+T2 = {(dummy_6, dummy_6), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_33, dummy_33), (dummy_44, dummy_44), (dummy_4, dummy_4), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_5, value_5)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_5
+hash value = 1886363142
+-----check hash value-----
+key = t2key_5
+hash value = 648725096
+-----check hash value-----
+key = dummy_2
+hash value = -1312570411
+-----check hash value-----
+key = t2dummy_2
+hash value = -1212102301
+-----check hash value-----
+key = dummy_9
+hash value = 544954280
+-----check hash value-----
+key = t2dummy_9
+hash value = 482274088
+-----check hash value-----
+key = dummy_0
+hash value = 125241538
+-----check hash value-----
+key = t2dummy_0
+hash value = 2109265003
+-----check hash value-----
+key = dummy_33
+hash value = -198734984
+-----check hash value-----
+key = t2dummy_33
+hash value = -445091892
+-----check stash candidate-----
+stash = {(dummy_55, dummy_55), (dummy, dummy)}
+
+Returned integer from ECALL is: 1
+
+T1 = {(dummy_9, dummy_9), (key_4, value_4), (key_5, value_5), (dummy_3, dummy_3), (dummy_1, dummy_1), (key_3, value_3), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_2, dummy_2)}
+T2 = {(dummy_6, dummy_6), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_0, dummy_0), (dummy_44, dummy_44), (dummy_4, dummy_4), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_6, value_6)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_6
+hash value = -519002794
+-----check hash value-----
+key = t2key_6
+hash value = 2017389760
+-----check hash value-----
+key = dummy_33
+hash value = -198734984
+-----check hash value-----
+key = t2dummy_33
+hash value = -445091892
+-----check hash value-----
+key = dummy_8
+hash value = 513240838
+-----check hash value-----
+key = t2dummy_8
+hash value = 284285355
+-----check hash value-----
+key = dummy_33
+hash value = -198734984
+-----check hash value-----
+key = t2dummy_33
+hash value = -445091892
+-----check hash value-----
+key = dummy_8
+hash value = 513240838
+-----check hash value-----
+key = t2dummy_8
+hash value = 284285355
+-----check stash candidate-----
+stash = {(dummy_33, dummy_33), (dummy, dummy)}
+
+Returned integer from ECALL is: 1
+
+T1 = {(dummy_9, dummy_9), (key_4, value_4), (key_5, value_5), (dummy_3, dummy_3), (dummy_1, dummy_1), (key_3, value_3), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_2, dummy_2)}
+T2 = {(dummy_6, dummy_6), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_0, dummy_0), (dummy_44, dummy_44), (dummy_4, dummy_4), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_7, value_7)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_7
+hash value = -1371506917
+-----check hash value-----
+key = t2key_7
+hash value = -764955601
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = key_4
+hash value = 544018371
+-----check hash value-----
+key = t2key_4
+hash value = 1409296695
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = key_4
+hash value = 544018371
+-----check hash value-----
+key = t2key_4
+hash value = 1409296695
+-----check stash candidate-----
+stash = {(, ), (dummy, dummy)}
+
+Returned integer from ECALL is: 1
+
+T1 = {(dummy_9, dummy_9), (key_4, value_4), (key_5, value_5), (dummy_3, dummy_3), (dummy_1, dummy_1), (key_3, value_3), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_2, dummy_2)}
+T2 = {(dummy_6, dummy_6), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_0, dummy_0), (dummy_44, dummy_44), (dummy_4, dummy_4), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_8, value_8)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_8
+hash value = -1008866785
+-----check hash value-----
+key = t2key_8
+hash value = -842921043
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = key_4
+hash value = 544018371
+-----check hash value-----
+key = t2key_4
+hash value = 1409296695
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = key_4
+hash value = 544018371
+-----check hash value-----
+key = t2key_4
+hash value = 1409296695
+-----check stash candidate-----
+stash = {(, ), (dummy, dummy)}
+
+Returned integer from ECALL is: 1
+
+T1 = {(dummy_9, dummy_9), (key_4, value_4), (key_5, value_5), (dummy_3, dummy_3), (dummy_1, dummy_1), (key_3, value_3), (key_2, value_2), (key_0, value_0), (dummy_8, dummy_8), (dummy_2, dummy_2)}
+T2 = {(dummy_6, dummy_6), (dummy_11, dummy_11), (dummy_22, dummy_22), (dummy_0, dummy_0), (dummy_44, dummy_44), (dummy_4, dummy_4), (dummy_66, dummy_66), (dummy_77, dummy_77), (dummy_88, dummy_88), (dummy_99, dummy_99)}
+
+-----------------------------------------
+Insert data (key_9, value_9)
+
+Execute ECALL.
+
+-----check hash value-----
+key = key_9
+hash value = -13491971
+-----check hash value-----
+key = t2key_9
+hash value = 1898732490
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = key_4
+hash value = 544018371
+-----check hash value-----
+key = t2key_4
+hash value = 1409296695
+-----check hash value-----
+key = 
+hash value = -177187409
+-----check hash value-----
+key = t2
+hash value = -1786077419
+-----check hash value-----
+key = key_4
+hash value = 544018371
+-----check hash value-----
+key = t2key_4
+hash value = 1409296695
+-----check stash candidate-----
+stash = {(, ), (dummy, dummy)}

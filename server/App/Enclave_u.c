@@ -8,9 +8,22 @@ typedef struct ms_ecall_start_t {
 	int* ms_size;
 } ms_ecall_start_t;
 
+typedef struct ms_ocall_check_hash_t {
+	int* ms_h;
+	char* ms_key;
+} ms_ocall_check_hash_t;
+
 typedef struct ms_ocall_return_stash_t {
 	struct keyvalue* ms_stash;
 } ms_ocall_return_stash_t;
+
+static sgx_status_t SGX_CDECL Enclave_ocall_check_hash(void* pms)
+{
+	ms_ocall_check_hash_t* ms = SGX_CAST(ms_ocall_check_hash_t*, pms);
+	ocall_check_hash(ms->ms_h, ms->ms_key);
+
+	return SGX_SUCCESS;
+}
 
 static sgx_status_t SGX_CDECL Enclave_ocall_return_stash(void* pms)
 {
@@ -22,10 +35,11 @@ static sgx_status_t SGX_CDECL Enclave_ocall_return_stash(void* pms)
 
 static const struct {
 	size_t nr_ocall;
-	void * table[1];
+	void * table[2];
 } ocall_table_Enclave = {
-	1,
+	2,
 	{
+		(void*)Enclave_ocall_check_hash,
 		(void*)Enclave_ocall_return_stash,
 	}
 };
