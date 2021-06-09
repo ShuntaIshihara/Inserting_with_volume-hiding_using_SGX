@@ -34,11 +34,6 @@ typedef struct ms_ecall_start_t {
 	int* ms_size;
 } ms_ecall_start_t;
 
-typedef struct ms_ocall_check_hash_t {
-	int* ms_h;
-	char* ms_key;
-} ms_ocall_check_hash_t;
-
 typedef struct ms_ocall_return_stash_t {
 	struct keyvalue* ms_stash;
 } ms_ocall_return_stash_t;
@@ -148,83 +143,14 @@ SGX_EXTERNC const struct {
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[2][1];
+	uint8_t entry_table[1][1];
 } g_dyn_entry_table = {
-	2,
+	1,
 	{
-		{0, },
 		{0, },
 	}
 };
 
-
-sgx_status_t SGX_CDECL ocall_check_hash(int* h, char* key)
-{
-	sgx_status_t status = SGX_SUCCESS;
-	size_t _len_h = sizeof(int);
-	size_t _len_key = key ? strlen(key) + 1 : 0;
-
-	ms_ocall_check_hash_t* ms = NULL;
-	size_t ocalloc_size = sizeof(ms_ocall_check_hash_t);
-	void *__tmp = NULL;
-
-
-	CHECK_ENCLAVE_POINTER(h, _len_h);
-	CHECK_ENCLAVE_POINTER(key, _len_key);
-
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (h != NULL) ? _len_h : 0))
-		return SGX_ERROR_INVALID_PARAMETER;
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (key != NULL) ? _len_key : 0))
-		return SGX_ERROR_INVALID_PARAMETER;
-
-	__tmp = sgx_ocalloc(ocalloc_size);
-	if (__tmp == NULL) {
-		sgx_ocfree();
-		return SGX_ERROR_UNEXPECTED;
-	}
-	ms = (ms_ocall_check_hash_t*)__tmp;
-	__tmp = (void *)((size_t)__tmp + sizeof(ms_ocall_check_hash_t));
-	ocalloc_size -= sizeof(ms_ocall_check_hash_t);
-
-	if (h != NULL) {
-		ms->ms_h = (int*)__tmp;
-		if (_len_h % sizeof(*h) != 0) {
-			sgx_ocfree();
-			return SGX_ERROR_INVALID_PARAMETER;
-		}
-		if (memcpy_s(__tmp, ocalloc_size, h, _len_h)) {
-			sgx_ocfree();
-			return SGX_ERROR_UNEXPECTED;
-		}
-		__tmp = (void *)((size_t)__tmp + _len_h);
-		ocalloc_size -= _len_h;
-	} else {
-		ms->ms_h = NULL;
-	}
-	
-	if (key != NULL) {
-		ms->ms_key = (char*)__tmp;
-		if (_len_key % sizeof(*key) != 0) {
-			sgx_ocfree();
-			return SGX_ERROR_INVALID_PARAMETER;
-		}
-		if (memcpy_s(__tmp, ocalloc_size, key, _len_key)) {
-			sgx_ocfree();
-			return SGX_ERROR_UNEXPECTED;
-		}
-		__tmp = (void *)((size_t)__tmp + _len_key);
-		ocalloc_size -= _len_key;
-	} else {
-		ms->ms_key = NULL;
-	}
-	
-	status = sgx_ocall(0, ms);
-
-	if (status == SGX_SUCCESS) {
-	}
-	sgx_ocfree();
-	return status;
-}
 
 sgx_status_t SGX_CDECL ocall_return_stash(struct keyvalue stash[2])
 {
@@ -266,7 +192,7 @@ sgx_status_t SGX_CDECL ocall_return_stash(struct keyvalue stash[2])
 		ms->ms_stash = NULL;
 	}
 	
-	status = sgx_ocall(1, ms);
+	status = sgx_ocall(0, ms);
 
 	if (status == SGX_SUCCESS) {
 	}
