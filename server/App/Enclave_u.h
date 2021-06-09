@@ -24,6 +24,10 @@ typedef struct keyvalue {
 } keyvalue;
 #endif
 
+#ifndef OCALL_CHECK_HASH_DEFINED__
+#define OCALL_CHECK_HASH_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_check_hash, (int* h, char* key));
+#endif
 #ifndef OCALL_RETURN_STASH_DEFINED__
 #define OCALL_RETURN_STASH_DEFINED__
 void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_return_stash, (struct keyvalue stash[2]));

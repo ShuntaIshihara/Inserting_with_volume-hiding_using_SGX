@@ -25,6 +25,7 @@ typedef struct keyvalue {
 
 int ecall_start(struct keyvalue table[2][10], struct keyvalue* data, int* size);
 
+sgx_status_t SGX_CDECL ocall_check_hash(int* h, char* key);
 sgx_status_t SGX_CDECL ocall_return_stash(struct keyvalue stash[2]);
 
 #ifdef __cplusplus
