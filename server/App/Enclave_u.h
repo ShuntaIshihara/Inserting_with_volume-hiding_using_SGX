@@ -33,9 +33,9 @@ typedef struct keyvalue {
 } keyvalue;
 #endif
 
-#ifndef OCALL_PRINT_DEFINED__
-#define OCALL_PRINT_DEFINED__
-void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_print, (const char* str));
+#ifndef OCALL_ERR_DIFFERENT_SIZE_DEFINED__
+#define OCALL_ERR_DIFFERENT_SIZE_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_err_different_size, (const char* str));
 #endif
 #ifndef OCALL_ERR_PRINT_DEFINED__
 #define OCALL_ERR_PRINT_DEFINED__
@@ -43,7 +43,7 @@ void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_err_print, (sgx_status_t* st));
 #endif
 
 sgx_status_t ecall_generate_keys(sgx_enclave_id_t eid);
-sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, unsigned char* field, unsigned char t_field[256]);
+sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, unsigned char t_field[256], unsigned char* data);
 sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, unsigned char dec[256], unsigned char enc[256]);
 sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue table[2][10], struct keyvalue* data, int* size);
 

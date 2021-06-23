@@ -45,7 +45,7 @@ void ecall_generate_keys()
     }
 }
 
-void ecall_encrypt(unsigned char *data, unsigned char t_data[256])
+void ecall_encrypt(unsigned char t_data[256], unsigned char *data)
 {
     size_t size = 0;
     sgx_status_t status = sgx_rsa_pub_encrypt_sha256(pub_key, NULL, &size,
@@ -57,7 +57,7 @@ void ecall_encrypt(unsigned char *data, unsigned char t_data[256])
         status = sgx_rsa_pub_encrypt_sha256(pub_key, t_data, &size,
         (const unsigned char *)data, strlen((const char *)data)+1);
     } else {
-        ocall_print("different size");
+        ocall_err_different_size("different size");
     }
 }
 
@@ -98,15 +98,15 @@ unsigned char* decrypt(unsigned char key[256])
         ocall_err_print(&status);
     }
 
-    unsigned char *cp = (unsigned char *)malloc(sizeof(unsigned char) * dec_len);
-    strlcpy((char *)cp, (const char *)dec_key, dec_len);
+    unsigned char *cp = (unsigned char *)malloc(sizeof(unsigned char) * (dec_len+1));
+    strlcpy((char *)cp, (const char *)dec_key, dec_len+1);
     return cp;
 }
 
 int hash_1(unsigned char* key, int size)
 {
     sgx_sha256_hash_t *hash = (sgx_sha256_hash_t *)malloc(sizeof(sgx_sha256_hash_t));
-    sgx_status_t st = sgx_sha256_msg((const uint8_t *) key, sizeof(key), (sgx_sha256_hash_t *) hash);
+    sgx_status_t st = sgx_sha256_msg((const uint8_t *) key, strlen((const char *)key)+1, (sgx_sha256_hash_t *) hash);
     
     int *h = (int *)hash;
     free(hash);
@@ -117,11 +117,11 @@ int hash_1(unsigned char* key, int size)
 
 int hash_2(unsigned char* key, int size)
 {
-    char key2[32] = "t2";
+    char key2[256] = "t2";
     strncat(key2, (const char *)key, 30);
     
     sgx_sha256_hash_t *hash = (sgx_sha256_hash_t *)malloc(sizeof(sgx_sha256_hash_t));
-    sgx_status_t st = sgx_sha256_msg((const uint8_t *) key2, sizeof(key2), (sgx_sha256_hash_t *) hash);
+    sgx_status_t st = sgx_sha256_msg((const uint8_t *) key2, strlen((const char *)key2)+1, (sgx_sha256_hash_t *) hash);
     
     int *h = (int *)hash;
     free(hash);
