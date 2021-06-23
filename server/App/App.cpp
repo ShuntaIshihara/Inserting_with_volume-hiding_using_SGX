@@ -9,25 +9,20 @@
 
 
 sgx_enclave_id_t global_eid = 0;
+int n_table = 1;
+int size = 10;
 
 //OCALL implementation
-
-//ハッシュ値のチェック
-//void ocall_check_hash(int *h, char *key)
-//{
-//    std::cout << "-----check hash value-----" << std::endl;
-//    std::cout << "key = " << key << std::endl;
-//    std::cout << "hash value = " << *h << std::endl;
-//}
-
-void ocall_return_stash(struct keyvalue stash[2])
+void ocall_print(const char *str)
 {
-    std::cout << "-----check stash candidate-----" << std::endl;
-    std::cout << "stash = {";
-    std::cout << "(" << stash[0].key << ", " << stash[0].value << "), ";
-    std::cout << "(" << stash[1].key << ", " << stash[1].value << ")}";
-    std::cout << std::endl;
+    std::cout << str << std::endl;
 }
+
+void ocall_err_print(sgx_status_t *st)
+{
+    sgx_error_print(*st);
+}
+
 
 /* Enclave initialization function */
 int initialize_enclave()
@@ -132,7 +127,161 @@ int initialize_enclave()
 	return 0;
 }
 
+//テーブルの初期化関数
+void table_init(struct keyvalue table[1][2][10])
+{
+    for (int i = 0; i < n_table; i++) {
+        for (int j = 0; j < size; j++) {
+            unsigned char key[15] = "dummy_";
+            std::strcat((char *)key, std::to_string(i).c_str());
+            std::strcat((char *)key, (char *)"0");
+            std::strcat((char *)key, std::to_string(j).c_str());
+            sgx_status_t status = ecall_encrypt(global_eid, key, table[i][0][j].key);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
 
+            key[7] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, key, table[i][1][j].key);
+            if (status != SGX_SUCCESS) {
+                    sgx_error_print(status);
+            }
+
+            unsigned char field[30] = "dummy_value_";
+            std::strcat((char *)field, std::to_string(i).c_str());
+            std::strcat((char *)field, (char *)"0");
+            std::strcat((char *)field, (char *)"0");
+            std::strcat((char *)field, std::to_string(j).c_str());
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field0);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field0);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'0';
+            field[14] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field1);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field1);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'0';
+            field[14] = (unsigned char)'2';
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field2);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field2);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'0';
+            field[14] = (unsigned char)'3';
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field3);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field3);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'0';
+            field[14] = (unsigned char)'4';
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field4);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field4);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'0';
+            field[14] = (unsigned char)'5';
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field5);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field5);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'0';
+            field[14] = (unsigned char)'6';
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field6);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field6);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'0';
+            field[14] = (unsigned char)'7';
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field7);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field7);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'0';
+            field[14] = (unsigned char)'8';
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field8);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field8);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'0';
+            field[14] = (unsigned char)'9';
+            status = ecall_encrypt(global_eid, field, table[i][0][j].field9);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+
+            field[13] = (unsigned char)'1';
+            status = ecall_encrypt(global_eid, field, table[i][1][j].field9);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+            }
+        }
+    }
+}
 
 
 int main()
@@ -145,82 +294,59 @@ int main()
 		return -1;
 	}
 
+    
+    //暗号化キーの生成
+    sgx_status_t status = ecall_generate_keys(global_eid);
 
-	/* start ECALL */
-    int size = 10;
-    struct keyvalue table[2][10];
-    for (int i = 0; i < size; i++) {
-        std::string key = "dummy_";
-        std::string value = "dummy_";
-        key += std::to_string(i);
-        value += std::to_string(i);
-        std::strcpy(table[0][i].key, key.c_str());
-        std::strcpy(table[0][i].value, key.c_str());
-        key += std::to_string(i);
-        value += std::to_string(i);
-        std::strcpy(table[1][i].key, value.c_str());
-        std::strcpy(table[1][i].value, value.c_str());
+    if(status != SGX_SUCCESS)
+    {
+        sgx_error_print(status);
+
+        return -1;
     }
-	int retval = -9999;
 
+    //Tableの初期化
+    struct keyvalue table[n_table][2][10];
+    table_init(table);
+
+    //データの挿入操作
+    struct keyvalue data;
+    ecall_encrypt(global_eid, (unsigned char *)"key", data.key);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field0);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field1);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field2);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field3);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field4);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field5);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field6);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field7);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field8);
+    ecall_encrypt(global_eid, (unsigned char *)"field", data.field9);
+
+    status = ecall_insertion_start(global_eid, table[0], &data, &size);
+    if (status != SGX_SUCCESS) {
+        sgx_error_print(status);
+
+        return -1;
+    }
+
+    unsigned char dec[256];
     std::cout << "T1 = {";
-    for (int i = 0; i < size - 1; i++) {
-        std::cout << "(" << table[0][i].key << ", " << table[0][i].value << "), ";
+    for (int i = 0; i < 9; i++) {
+        ecall_decrypt(global_eid, dec, table[0][0][i].key);
+        std::cout << dec << ", ";
     }
-    std::cout << "(" << table[0][size-1].key << ", " << table[0][size-1].value << ")}" << std::endl;
+    ecall_decrypt(global_eid, dec, table[0][0][9].key);
+    std::cout << dec << "}" << std::endl;
 
     std::cout << "T2 = {";
-    for (int i = 0; i < size - 1; i++) {
-        std::cout << "(" << table[1][i].key << ", " << table[1][i].value << "), ";
+    for (int i = 0; i < 9; i++) {
+        ecall_decrypt(global_eid, dec, table[0][1][i].key);
+        std::cout << dec << ", ";
     }
-    std::cout << "(" << table[1][size-1].key << ", " << table[1][size-1].value << ")}" << std::endl;
-
-    for (int i = 0; i < size; i++) {
-        struct keyvalue data;
-        std::string key = "key_";
-        std::string value = "value_";
-        key += std::to_string(i);
-        value += std::to_string(i);
-        std::strcpy(data.key, key.c_str());
-        std::strcpy(data.value, value.c_str());
-
-        std::cout << "\n-----------------------------------------" << std::endl;
-        std::cout << "Insert data (" << data.key << ", " << data.value << ")" << std::endl;
-        std::cout << "\nExecute ECALL.\n" << std::endl;
-
-        sgx_status_t status = ecall_start(global_eid, &retval,
-                table, &data, &size);
-
-        if(status != SGX_SUCCESS)
-        {
-            sgx_error_print(status);
-
-            return -1;
-        }
-        else
-        {
-            /* This function also can display succeeded message */
-            sgx_error_print(status);
-        }
-
-
-        /* print ECALL result */
-        std::cout << "\nReturned integer from ECALL is: " << retval << std::endl;
-        
-        std::cout << "\nT1 = {";
-        for (int i = 0; i < size - 1; i++) {
-            std::cout << "(" << table[0][i].key << ", " << table[0][i].value << "), ";
-        }
-        std::cout << "(" << table[0][size-1].key << ", " << table[0][size-1].value << ")}" << std::endl;
-
-        std::cout << "T2 = {";
-        for (int i = 0; i < size - 1; i++) {
-            std::cout << "(" << table[1][i].key << ", " << table[1][i].value << "), ";
-        }
-        std::cout << "(" << table[1][size-1].key << ", " << table[1][size-1].value << ")}" << std::endl;
-    }
-
-
+    ecall_decrypt(global_eid, dec, table[0][1][9].key);
+    std::cout << dec << "}" << std::endl;
+ 
 
 	/* Destruct the enclave */
 	sgx_destroy_enclave(global_eid);
