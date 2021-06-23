@@ -81,6 +81,23 @@ void ecall_decrypt(unsigned char dec[256], unsigned char enc[256])
     strlcpy((char *)dec, (const char *)dec_key, dec_len);
 }
 
+void encrypt(unsigned char enc[256], unsigned char *data)
+{
+    size_t size = 0;
+    sgx_status_t status = sgx_rsa_pub_encrypt_sha256(pub_key, NULL, &size,
+    (const unsigned char *)data, strlen((const char *)data)+1);
+    if (status != SGX_SUCCESS) {
+        ocall_err_print(&status);
+    }
+
+    if (size == 256) {
+        status = sgx_rsa_pub_encrypt_sha256(pub_key, enc, &size,
+        (const unsigned char *)data, strlen((const char *)data)+1);
+    } else {
+        ocall_err_different_size("different size");
+    }
+}
+
 unsigned char* decrypt(unsigned char key[256])
 {
     size_t enc_len = 256;
@@ -98,8 +115,8 @@ unsigned char* decrypt(unsigned char key[256])
         ocall_err_print(&status);
     }
 
-    unsigned char *cp = (unsigned char *)malloc(sizeof(unsigned char) * (dec_len+1));
-    strlcpy((char *)cp, (const char *)dec_key, dec_len+1);
+    unsigned char *cp = (unsigned char *)malloc(sizeof(unsigned char) * dec_len);
+    strlcpy((char *)cp, (const char *)dec_key, dec_len);
     return cp;
 }
 
@@ -155,8 +172,29 @@ void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue *data, 
     stash[0] = cuckoo(table, *data, *size, 0, 0, 5);
 
     //ランダムなキーバリューデータ（ダミーデータ）を生成
+    struct keyvalue dummy;
+    unsigned char v[32] = "dummy_";
+    int rand;
+    sgx_status_t status = sgx_read_rand((unsigned char *)&rand, 4);
+    if (status != SGX_SUCCESS) {
+        ocall_err_print(&status);
+    }
+    wchar_t wc[32];
+    swprintf(wc, sizeof(wc)/sizeof(wchar_t), L"%d", rand);
+    strncat((char *)v, (const char *)wc, 26);
+    encrypt(dummy.key, v);
+    for (int i = 0; i < 10; i++) {
+        v[6] = '\0';
+        status = sgx_read_rand((unsigned char *)&rand, 4);
+        if (status != SGX_SUCCESS) {
+            ocall_err_print(&status);
+        }
+        swprintf(wc, sizeof(wc)/sizeof(wchar_t), L"%d", rand);
+        strncat((char *)v, (const char *)wc, 26);
+        encrypt(dummy.value[i], v);
+    }
     //ダミーデータを挿入し、托卵操作を行う
-
+    stash[1] = cuckoo(table, dummy, *size, 0, 0, 5);
     //OCALLでstashに格納するものをクライアントに返す
 
 }

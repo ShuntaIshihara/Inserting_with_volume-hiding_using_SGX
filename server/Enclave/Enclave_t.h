@@ -19,26 +19,18 @@ extern "C" {
 #define _keyvalue
 typedef struct keyvalue {
 	unsigned char key[256];
-	unsigned char field0[256];
-	unsigned char field1[256];
-	unsigned char field2[256];
-	unsigned char field3[256];
-	unsigned char field4[256];
-	unsigned char field5[256];
-	unsigned char field6[256];
-	unsigned char field7[256];
-	unsigned char field8[256];
-	unsigned char field9[256];
+	unsigned char value[10][256];
 } keyvalue;
 #endif
 
 void ecall_generate_keys(void);
-void ecall_encrypt(unsigned char t_field[256], unsigned char* data);
+void ecall_encrypt(unsigned char t_data[256], unsigned char* data);
 void ecall_decrypt(unsigned char dec[256], unsigned char enc[256]);
 void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue* data, int* size);
 
 sgx_status_t SGX_CDECL ocall_err_different_size(const char* str);
 sgx_status_t SGX_CDECL ocall_err_print(sgx_status_t* st);
+sgx_status_t SGX_CDECL ocall_print(int* rnd);
 
 #ifdef __cplusplus
 }
