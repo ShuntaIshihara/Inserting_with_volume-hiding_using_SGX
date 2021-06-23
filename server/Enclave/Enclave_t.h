@@ -33,11 +33,11 @@ typedef struct keyvalue {
 #endif
 
 void ecall_generate_keys(void);
-void ecall_encrypt(unsigned char* field, unsigned char t_field[256]);
+void ecall_encrypt(unsigned char t_field[256], unsigned char* data);
 void ecall_decrypt(unsigned char dec[256], unsigned char enc[256]);
 void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue* data, int* size);
 
-sgx_status_t SGX_CDECL ocall_print(const char* str);
+sgx_status_t SGX_CDECL ocall_err_different_size(const char* str);
 sgx_status_t SGX_CDECL ocall_err_print(sgx_status_t* st);
 
 #ifdef __cplusplus

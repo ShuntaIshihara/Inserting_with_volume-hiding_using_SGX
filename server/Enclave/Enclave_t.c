@@ -28,9 +28,9 @@
 
 
 typedef struct ms_ecall_encrypt_t {
-	unsigned char* ms_field;
-	size_t ms_field_len;
 	unsigned char* ms_t_field;
+	unsigned char* ms_data;
+	size_t ms_data_len;
 } ms_ecall_encrypt_t;
 
 typedef struct ms_ecall_decrypt_t {
@@ -44,9 +44,9 @@ typedef struct ms_ecall_insertion_start_t {
 	int* ms_size;
 } ms_ecall_insertion_start_t;
 
-typedef struct ms_ocall_print_t {
+typedef struct ms_ocall_err_different_size_t {
 	const char* ms_str;
-} ms_ocall_print_t;
+} ms_ocall_err_different_size_t;
 
 typedef struct ms_ocall_err_print_t {
 	sgx_status_t* ms_st;
@@ -69,40 +69,21 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt(void* pms)
 	sgx_lfence();
 	ms_ecall_encrypt_t* ms = SGX_CAST(ms_ecall_encrypt_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
-	unsigned char* _tmp_field = ms->ms_field;
-	size_t _len_field = ms->ms_field_len ;
-	unsigned char* _in_field = NULL;
 	unsigned char* _tmp_t_field = ms->ms_t_field;
 	size_t _len_t_field = 256 * sizeof(unsigned char);
 	unsigned char* _in_t_field = NULL;
+	unsigned char* _tmp_data = ms->ms_data;
+	size_t _len_data = ms->ms_data_len ;
+	unsigned char* _in_data = NULL;
 
-	CHECK_UNIQUE_POINTER(_tmp_field, _len_field);
 	CHECK_UNIQUE_POINTER(_tmp_t_field, _len_t_field);
+	CHECK_UNIQUE_POINTER(_tmp_data, _len_data);
 
 	//
 	// fence after pointer checks
 	//
 	sgx_lfence();
 
-	if (_tmp_field != NULL && _len_field != 0) {
-		_in_field = (unsigned char*)malloc(_len_field);
-		if (_in_field == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
-
-		if (memcpy_s(_in_field, _len_field, _tmp_field, _len_field)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-		_in_field[_len_field - 1] = '\0';
-		if (_len_field != strlen(_in_field) + 1)
-		{
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-	}
 	if (_tmp_t_field != NULL && _len_t_field != 0) {
 		if ( _len_t_field % sizeof(*_tmp_t_field) != 0)
 		{
@@ -121,8 +102,27 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt(void* pms)
 		}
 
 	}
+	if (_tmp_data != NULL && _len_data != 0) {
+		_in_data = (unsigned char*)malloc(_len_data);
+		if (_in_data == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
 
-	ecall_encrypt(_in_field, _in_t_field);
+		if (memcpy_s(_in_data, _len_data, _tmp_data, _len_data)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+		_in_data[_len_data - 1] = '\0';
+		if (_len_data != strlen(_in_data) + 1)
+		{
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+	}
+
+	ecall_encrypt(_in_t_field, _in_data);
 	if (_in_t_field) {
 		if (memcpy_s(_tmp_t_field, _len_t_field, _in_t_field, _len_t_field)) {
 			status = SGX_ERROR_UNEXPECTED;
@@ -131,8 +131,8 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt(void* pms)
 	}
 
 err:
-	if (_in_field) free(_in_field);
 	if (_in_t_field) free(_in_t_field);
+	if (_in_data) free(_in_data);
 	return status;
 }
 
@@ -329,13 +329,13 @@ SGX_EXTERNC const struct {
 };
 
 
-sgx_status_t SGX_CDECL ocall_print(const char* str)
+sgx_status_t SGX_CDECL ocall_err_different_size(const char* str)
 {
 	sgx_status_t status = SGX_SUCCESS;
 	size_t _len_str = str ? strlen(str) + 1 : 0;
 
-	ms_ocall_print_t* ms = NULL;
-	size_t ocalloc_size = sizeof(ms_ocall_print_t);
+	ms_ocall_err_different_size_t* ms = NULL;
+	size_t ocalloc_size = sizeof(ms_ocall_err_different_size_t);
 	void *__tmp = NULL;
 
 
@@ -349,9 +349,9 @@ sgx_status_t SGX_CDECL ocall_print(const char* str)
 		sgx_ocfree();
 		return SGX_ERROR_UNEXPECTED;
 	}
-	ms = (ms_ocall_print_t*)__tmp;
-	__tmp = (void *)((size_t)__tmp + sizeof(ms_ocall_print_t));
-	ocalloc_size -= sizeof(ms_ocall_print_t);
+	ms = (ms_ocall_err_different_size_t*)__tmp;
+	__tmp = (void *)((size_t)__tmp + sizeof(ms_ocall_err_different_size_t));
+	ocalloc_size -= sizeof(ms_ocall_err_different_size_t);
 
 	if (str != NULL) {
 		ms->ms_str = (const char*)__tmp;

@@ -13,16 +13,23 @@ int n_table = 1;
 int size = 10;
 
 //OCALL implementation
-void ocall_print(const char *str)
+void ocall_err_different_size(const char *str)
 {
-    std::cout << str << std::endl;
+    std::cerr << str << std::endl;
+    //↓↓↓例外処理を入れる↓↓↓
 }
 
 void ocall_err_print(sgx_status_t *st)
 {
     sgx_error_print(*st);
+    //↓↓↓例外処理を入れる↓↓↓
 }
 
+void ocall_hash_print(int *h)
+{
+    std::cout << "hash = ";
+    std::cout << *h << std::endl;
+}
 
 /* Enclave initialization function */
 int initialize_enclave()
@@ -136,13 +143,13 @@ void table_init(struct keyvalue table[1][2][10])
             std::strcat((char *)key, std::to_string(i).c_str());
             std::strcat((char *)key, (char *)"0");
             std::strcat((char *)key, std::to_string(j).c_str());
-            sgx_status_t status = ecall_encrypt(global_eid, key, table[i][0][j].key);
+            sgx_status_t status = ecall_encrypt(global_eid, table[i][0][j].key, key);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             key[7] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, key, table[i][1][j].key);
+            status = ecall_encrypt(global_eid, table[i][1][j].key, key);
             if (status != SGX_SUCCESS) {
                     sgx_error_print(status);
             }
@@ -152,130 +159,130 @@ void table_init(struct keyvalue table[1][2][10])
             std::strcat((char *)field, (char *)"0");
             std::strcat((char *)field, (char *)"0");
             std::strcat((char *)field, std::to_string(j).c_str());
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field0);
+            status = ecall_encrypt(global_eid, table[i][0][j].field0, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field0);
+            status = ecall_encrypt(global_eid, table[i][1][j].field0, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'0';
             field[14] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field1);
+            status = ecall_encrypt(global_eid, table[i][0][j].field1, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field1);
+            status = ecall_encrypt(global_eid, table[i][1][j].field1, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'0';
             field[14] = (unsigned char)'2';
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field2);
+            status = ecall_encrypt(global_eid, table[i][0][j].field2, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field2);
+            status = ecall_encrypt(global_eid, table[i][1][j].field2, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'0';
             field[14] = (unsigned char)'3';
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field3);
+            status = ecall_encrypt(global_eid, table[i][0][j].field3, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field3);
+            status = ecall_encrypt(global_eid, table[i][1][j].field3, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'0';
             field[14] = (unsigned char)'4';
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field4);
+            status = ecall_encrypt(global_eid, table[i][0][j].field4, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field4);
+            status = ecall_encrypt(global_eid, table[i][1][j].field4, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'0';
             field[14] = (unsigned char)'5';
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field5);
+            status = ecall_encrypt(global_eid, table[i][0][j].field5, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field5);
+            status = ecall_encrypt(global_eid, table[i][1][j].field5, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'0';
             field[14] = (unsigned char)'6';
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field6);
+            status = ecall_encrypt(global_eid, table[i][0][j].field6, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field6);
+            status = ecall_encrypt(global_eid, table[i][1][j].field6, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'0';
             field[14] = (unsigned char)'7';
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field7);
+            status = ecall_encrypt(global_eid, table[i][0][j].field7, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field7);
+            status = ecall_encrypt(global_eid, table[i][1][j].field7, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'0';
             field[14] = (unsigned char)'8';
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field8);
+            status = ecall_encrypt(global_eid, table[i][0][j].field8, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field8);
+            status = ecall_encrypt(global_eid, table[i][1][j].field8, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'0';
             field[14] = (unsigned char)'9';
-            status = ecall_encrypt(global_eid, field, table[i][0][j].field9);
+            status = ecall_encrypt(global_eid, table[i][0][j].field9, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             field[13] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, field, table[i][1][j].field9);
+            status = ecall_encrypt(global_eid, table[i][1][j].field9, field);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
@@ -311,17 +318,17 @@ int main()
 
     //データの挿入操作
     struct keyvalue data;
-    ecall_encrypt(global_eid, (unsigned char *)"key", data.key);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field0);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field1);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field2);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field3);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field4);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field5);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field6);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field7);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field8);
-    ecall_encrypt(global_eid, (unsigned char *)"field", data.field9);
+    ecall_encrypt(global_eid, data.key, (unsigned char *)"key");
+    ecall_encrypt(global_eid, data.field0, (unsigned char *)"field");
+    ecall_encrypt(global_eid, data.field1, (unsigned char *)"field");
+    ecall_encrypt(global_eid, data.field2, (unsigned char *)"field");
+    ecall_encrypt(global_eid, data.field3, (unsigned char *)"field");
+    ecall_encrypt(global_eid, data.field4, (unsigned char *)"field");
+    ecall_encrypt(global_eid, data.field5, (unsigned char *)"field");
+    ecall_encrypt(global_eid, data.field6, (unsigned char *)"field");
+    ecall_encrypt(global_eid, data.field7, (unsigned char *)"field");
+    ecall_encrypt(global_eid, data.field8, (unsigned char *)"field");
+    ecall_encrypt(global_eid, data.field9, (unsigned char *)"field");
 
     status = ecall_insertion_start(global_eid, table[0], &data, &size);
     if (status != SGX_SUCCESS) {
