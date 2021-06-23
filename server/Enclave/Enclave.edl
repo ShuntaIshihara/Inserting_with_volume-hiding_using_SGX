@@ -1,20 +1,32 @@
 enclave
 {
     struct keyvalue {
-        char key[32];
-        char value[32];
+        unsigned char key[256];
+        unsigned char field0[256];
+        unsigned char field1[256];
+        unsigned char field2[256];
+        unsigned char field3[256];
+        unsigned char field4[256];
+        unsigned char field5[256];
+        unsigned char field6[256];
+        unsigned char field7[256];
+        unsigned char field8[256];
+        unsigned char field9[256];
     };
 
 	trusted
 	{
 		/*These are ECALL defines.*/
-		public int ecall_start([in,out]struct keyvalue table[2][10], [in]struct keyvalue *data, [in]int *size);
+        public void ecall_generate_keys();
+        public void ecall_encrypt([in,string]unsigned char *field, [in,out]unsigned char t_field[256]);
+        public void ecall_decrypt([in,out]unsigned char dec[256], [in]unsigned char enc[256]);
+		public void ecall_insertion_start([in,out]struct keyvalue table[2][10], [in]struct keyvalue *data, [in]int *size);
 	};
 
 	untrusted
 	{
 		/*These are OCALL defines.*/
-        /*void ocall_check_hash([in]int *h, [in, string]char *key);*/
-        void ocall_return_stash([in]struct keyvalue stash[2]);
+        void ocall_print([in, string]const char *str);
+        void ocall_err_print([in]sgx_status_t *st);
 	};
 };

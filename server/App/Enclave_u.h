@@ -19,17 +19,33 @@ extern "C" {
 #ifndef _keyvalue
 #define _keyvalue
 typedef struct keyvalue {
-	char key[32];
-	char value[32];
+	unsigned char key[256];
+	unsigned char field0[256];
+	unsigned char field1[256];
+	unsigned char field2[256];
+	unsigned char field3[256];
+	unsigned char field4[256];
+	unsigned char field5[256];
+	unsigned char field6[256];
+	unsigned char field7[256];
+	unsigned char field8[256];
+	unsigned char field9[256];
 } keyvalue;
 #endif
 
-#ifndef OCALL_RETURN_STASH_DEFINED__
-#define OCALL_RETURN_STASH_DEFINED__
-void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_return_stash, (struct keyvalue stash[2]));
+#ifndef OCALL_PRINT_DEFINED__
+#define OCALL_PRINT_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_print, (const char* str));
+#endif
+#ifndef OCALL_ERR_PRINT_DEFINED__
+#define OCALL_ERR_PRINT_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_err_print, (sgx_status_t* st));
 #endif
 
-sgx_status_t ecall_start(sgx_enclave_id_t eid, int* retval, struct keyvalue table[2][10], struct keyvalue* data, int* size);
+sgx_status_t ecall_generate_keys(sgx_enclave_id_t eid);
+sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, unsigned char* field, unsigned char t_field[256]);
+sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, unsigned char dec[256], unsigned char enc[256]);
+sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue table[2][10], struct keyvalue* data, int* size);
 
 #ifdef __cplusplus
 }
