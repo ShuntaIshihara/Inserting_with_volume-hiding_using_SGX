@@ -14,6 +14,13 @@ int n_table = 1;
 int size = 10;
 
 //OCALL implementation
+void ocall_return_stash(struct keyvalue stash[2])
+{
+    std::cout << "stash = {";
+    std::cout << std::hex << stash[0].key << ", ";
+    std::cout << std::hex << stash[1].key << "}" << std::endl;
+}
+
 void ocall_err_different_size(const char *str)
 {
     std::cerr << str << std::endl;

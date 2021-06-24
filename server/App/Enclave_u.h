@@ -36,6 +36,10 @@ void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_err_print, (sgx_status_t* st));
 #define OCALL_PRINT_DEFINED__
 void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_print, (int* rnd));
 #endif
+#ifndef OCALL_RETURN_STASH_DEFINED__
+#define OCALL_RETURN_STASH_DEFINED__
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_return_stash, (struct keyvalue stash[2]));
+#endif
 
 sgx_status_t ecall_generate_keys(sgx_enclave_id_t eid);
 sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, unsigned char t_data[256], unsigned char* data);
