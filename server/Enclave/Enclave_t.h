@@ -31,6 +31,7 @@ void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue* data, 
 sgx_status_t SGX_CDECL ocall_err_different_size(const char* str);
 sgx_status_t SGX_CDECL ocall_err_print(sgx_status_t* st);
 sgx_status_t SGX_CDECL ocall_print(int* rnd);
+sgx_status_t SGX_CDECL ocall_return_stash(struct keyvalue stash[2]);
 
 #ifdef __cplusplus
 }

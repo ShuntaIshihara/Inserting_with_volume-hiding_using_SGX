@@ -147,6 +147,13 @@ int hash_2(unsigned char* key, int size)
     return abs(*h) % size;
 }
 
+int is_dummy(unsigned char *k)
+{
+    int check = strncmp((const char *)k, "dummy_", 6);
+    if (check == 0) return 1;
+    return 0;
+}
+
 struct keyvalue cuckoo(struct keyvalue table[2][10], struct keyvalue data, int size, int tableID, int cnt, int limit)
 {
     if (cnt >= limit) return data;
@@ -160,6 +167,9 @@ struct keyvalue cuckoo(struct keyvalue table[2][10], struct keyvalue data, int s
     struct keyvalue w = table[tableID][pos[tableID]];
     table[tableID][pos[tableID]] = data;
 
+    unsigned char *k = decrypt(w.key);
+    if (is_dummy(k)) return w;
+    free(k);
     //追い出されたデータをもう一方のテーブルに移す
     return cuckoo(table, w, size, (tableID+1)%2, cnt+1, limit);
 }
@@ -196,5 +206,5 @@ void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue *data, 
     //ダミーデータを挿入し、托卵操作を行う
     stash[1] = cuckoo(table, dummy, *size, 0, 0, 5);
     //OCALLでstashに格納するものをクライアントに返す
-
+    ocall_return_stash(stash);
 }

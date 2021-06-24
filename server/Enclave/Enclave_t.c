@@ -56,6 +56,10 @@ typedef struct ms_ocall_print_t {
 	int* ms_rnd;
 } ms_ocall_print_t;
 
+typedef struct ms_ocall_return_stash_t {
+	struct keyvalue* ms_stash;
+} ms_ocall_return_stash_t;
+
 static sgx_status_t SGX_CDECL sgx_ecall_generate_keys(void* pms)
 {
 	sgx_status_t status = SGX_SUCCESS;
@@ -323,10 +327,11 @@ SGX_EXTERNC const struct {
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[3][4];
+	uint8_t entry_table[4][4];
 } g_dyn_entry_table = {
-	3,
+	4,
 	{
+		{0, 0, 0, 0, },
 		{0, 0, 0, 0, },
 		{0, 0, 0, 0, },
 		{0, 0, 0, 0, },
@@ -467,6 +472,54 @@ sgx_status_t SGX_CDECL ocall_print(int* rnd)
 	}
 	
 	status = sgx_ocall(2, ms);
+
+	if (status == SGX_SUCCESS) {
+	}
+	sgx_ocfree();
+	return status;
+}
+
+sgx_status_t SGX_CDECL ocall_return_stash(struct keyvalue stash[2])
+{
+	sgx_status_t status = SGX_SUCCESS;
+	size_t _len_stash = 2 * sizeof(struct keyvalue);
+
+	ms_ocall_return_stash_t* ms = NULL;
+	size_t ocalloc_size = sizeof(ms_ocall_return_stash_t);
+	void *__tmp = NULL;
+
+
+	CHECK_ENCLAVE_POINTER(stash, _len_stash);
+
+	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (stash != NULL) ? _len_stash : 0))
+		return SGX_ERROR_INVALID_PARAMETER;
+
+	__tmp = sgx_ocalloc(ocalloc_size);
+	if (__tmp == NULL) {
+		sgx_ocfree();
+		return SGX_ERROR_UNEXPECTED;
+	}
+	ms = (ms_ocall_return_stash_t*)__tmp;
+	__tmp = (void *)((size_t)__tmp + sizeof(ms_ocall_return_stash_t));
+	ocalloc_size -= sizeof(ms_ocall_return_stash_t);
+
+	if (stash != NULL) {
+		ms->ms_stash = (struct keyvalue*)__tmp;
+		if (_len_stash % sizeof(*stash) != 0) {
+			sgx_ocfree();
+			return SGX_ERROR_INVALID_PARAMETER;
+		}
+		if (memcpy_s(__tmp, ocalloc_size, stash, _len_stash)) {
+			sgx_ocfree();
+			return SGX_ERROR_UNEXPECTED;
+		}
+		__tmp = (void *)((size_t)__tmp + _len_stash);
+		ocalloc_size -= _len_stash;
+	} else {
+		ms->ms_stash = NULL;
+	}
+	
+	status = sgx_ocall(3, ms);
 
 	if (status == SGX_SUCCESS) {
 	}

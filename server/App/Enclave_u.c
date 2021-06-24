@@ -30,6 +30,10 @@ typedef struct ms_ocall_print_t {
 	int* ms_rnd;
 } ms_ocall_print_t;
 
+typedef struct ms_ocall_return_stash_t {
+	struct keyvalue* ms_stash;
+} ms_ocall_return_stash_t;
+
 static sgx_status_t SGX_CDECL Enclave_ocall_err_different_size(void* pms)
 {
 	ms_ocall_err_different_size_t* ms = SGX_CAST(ms_ocall_err_different_size_t*, pms);
@@ -54,15 +58,24 @@ static sgx_status_t SGX_CDECL Enclave_ocall_print(void* pms)
 	return SGX_SUCCESS;
 }
 
+static sgx_status_t SGX_CDECL Enclave_ocall_return_stash(void* pms)
+{
+	ms_ocall_return_stash_t* ms = SGX_CAST(ms_ocall_return_stash_t*, pms);
+	ocall_return_stash(ms->ms_stash);
+
+	return SGX_SUCCESS;
+}
+
 static const struct {
 	size_t nr_ocall;
-	void * table[3];
+	void * table[4];
 } ocall_table_Enclave = {
-	3,
+	4,
 	{
 		(void*)Enclave_ocall_err_different_size,
 		(void*)Enclave_ocall_err_print,
 		(void*)Enclave_ocall_print,
+		(void*)Enclave_ocall_return_stash,
 	}
 };
 sgx_status_t ecall_generate_keys(sgx_enclave_id_t eid)
