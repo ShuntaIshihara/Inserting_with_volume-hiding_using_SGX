@@ -3,11 +3,16 @@
 #include <string>
 #include <random>
 #include <iostream>
+#include <sys/type.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #include "Enclave_u.h"
 #include <sgx_urts.h>
 #include "error_print.h"
 
-
+#define BUFFER_SIZE 256
 
 sgx_enclave_id_t global_eid = 0;
 int n_table = 1;
@@ -221,6 +226,49 @@ int main()
     //Tableの初期化
     struct keyvalue table[n_table][2][10];
     table_init(table);
+
+    //ポート番号、ソケット
+    unsigned short port = 8080;
+    int srcSocket;
+    int dstSocket;
+
+    //sockaddr_in 構造体
+    struct sockaddr_in srcAddr;
+    struct sockaddr_in dstAddr;
+    int dstAddrSize = sizeof(dstAddr);
+
+    //各種パラメータ
+    int numrcv;
+    char buffer[BUFFER_SIZE];
+
+    //sockaddr_in 構造体のセット
+    memset(&srcAddr, 0, sizeof(srcAddr));
+    srcAddr.sin_port = htons(port);
+    srcAddr.sin_family = AF_INET;
+    srcAddr.sin_addr.s_addr = htonl(INDDR_ANY);
+
+    //ソケットの生成
+    srcSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+    //ソケットのバインド
+    bind(srcSocket, &srcAddr, sizeof(srcAddr));
+
+    //接続準備
+    listen(srcSocket, 1);
+
+    //接続の受付
+    std::cout << "Waiting for connection ..." << std::endl;
+    dstSocket = accept(srcSocket, &dstAddr, dstAddrSize);
+    std::cout << "Connected from " << inet_ntoa(dstAddr.sin_addr) << std::endl;
+
+    //パケット受信
+    while(1) {
+        numrcv = recv(dstSocket, buffer, BUFFER_SIZE, 0);
+        if(numrcv == 0 || numrcv == -1) {
+            status = close(dstSocket); break;
+        }
+        std::printf("received: %s\n", buffer);
+    }
 
     //データの挿入操作
     struct keyvalue data;
