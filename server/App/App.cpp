@@ -3,17 +3,15 @@
 #include <string>
 #include <random>
 #include <iostream>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#include <iostream> //標準入出力
+#include <sys/socket.h> //アドレスドメイン
+#include <sys/types.h> //ソケットタイプ
+#include <arpa/inet.h> //バイトオーダの変換に利用
+#include <unistd.h> //close()に利用
 #include "Enclave_u.h"
 #include <sgx_urts.h>
 #include "error_print.h"
 
-#define BUFFER_SIZE 256
 
 sgx_enclave_id_t global_eid = 0;
 int n_table = 1;
@@ -228,48 +226,58 @@ int main()
     struct keyvalue table[n_table][2][10];
     table_init(table);
 
-    //ポート番号、ソケット
-    unsigned short port = 8080;
-    int srcSocket;
-    int dstSocket;
+	//ソケットの生成
+	int sockfd = socket(AF_INET, SOCK_STREAM, 0); //アドレスドメイン, ソケットタイプ, プロトコル
+	if(sockfd < 0){ //エラー処理
 
-    //sockaddr_in 構造体
-    struct sockaddr_in srcAddr;
-    struct sockaddr_in dstAddr;
-    int dstAddrSize = sizeof(dstAddr);
+		std::cout << "Error socket:" << std::strerror(errno); //標準出力
+		exit(1); //異常終了
+	}
 
-    //各種パラメータ
-    int numrcv;
-    char buffer[BUFFER_SIZE];
+	//アドレスの生成
+	struct sockaddr_in addr; //接続先の情報用の構造体(ipv4)
+	memset(&addr, 0, sizeof(struct sockaddr_in)); //memsetで初期化
+	addr.sin_family = AF_INET; //アドレスファミリ(ipv4)
+	addr.sin_port = htons(8080); //ポート番号,htons()関数は16bitホストバイトオーダーをネットワークバイトオーダーに変換
+	addr.sin_addr.s_addr = INADDR_ANY;
+	//ソケット登録
+	if(bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0){ //ソケット, アドレスポインタ, アドレスサイズ //エラー処理
 
-    //sockaddr_in 構造体のセット
-    memset(&srcAddr, 0, sizeof(srcAddr));
-    srcAddr.sin_port = htons(port);
-    srcAddr.sin_family = AF_INET;
-    srcAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		std::cout << "Error bind:" << std::strerror(errno); //標準出力
+		exit(1); //異常終了
+	}
 
-    //ソケットの生成
-    srcSocket = socket(AF_INET, SOCK_STREAM, 0);
+	//受信待ち
+	if(listen(sockfd,SOMAXCONN) < 0){ //ソケット, キューの最大長 //エラー処理
 
-    //ソケットのバインド
-    bind(srcSocket, (struct sockaddr *) &srcAddr, sizeof(srcAddr));
+		std::cout << "Error listen:" << std::strerror(errno); //標準出力
+		close(sockfd); //ソケットクローズ
+		exit(1); //異常終了
+	}
 
-    //接続準備
-    listen(srcSocket, 1);
+	//接続待ち
+	struct sockaddr_in get_addr; //接続相手のソケットアドレス
+	socklen_t len = sizeof(struct sockaddr_in); //接続相手のアドレスサイズ
+	int connect = accept(sockfd, (struct sockaddr *)&get_addr, &len); //接続待ちソケット, 接続相手のソケットアドレスポインタ, 接続相手のアドレスサイズ
 
-    //接続の受付
-    std::cout << "Waiting for connection ..." << std::endl;
-    dstSocket = accept(srcSocket, (struct sockaddr *) &dstAddr, (socklen_t *)&dstAddrSize);
-    std::cout << "Connected from " << inet_ntoa(dstAddr.sin_addr) << std::endl;
+	if(connect < 0){ //エラー処理
 
-    //パケット受信
-    while(1) {
-        numrcv = recv(dstSocket, buffer, BUFFER_SIZE, 0);
-        if(numrcv == 0 || numrcv == -1) {
-            close(dstSocket); break;
-        }
-        std::printf("received: %s\n", buffer);
-    }
+		std::cout << "Error accept:" << std::strerror(errno); //標準出力
+		exit(1); //異常終了
+	}
+
+	//受信
+	char str[12]; //受信用データ格納用
+	recv(connect, str, 12, 0); //受信
+	std::cout << str << std::endl; //標準出力
+
+	//送信
+	send(connect, str, 12, 0); //送信
+	std::cout << str << std::endl; //標準出力
+
+	//ソケットクローズ
+	close(connect);
+	close(sockfd);
 
     //データの挿入操作
     struct keyvalue data;
