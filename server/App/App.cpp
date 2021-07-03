@@ -3,7 +3,8 @@
 #include <string>
 #include <random>
 #include <iostream>
-#include <sys/type.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -245,27 +246,27 @@ int main()
     memset(&srcAddr, 0, sizeof(srcAddr));
     srcAddr.sin_port = htons(port);
     srcAddr.sin_family = AF_INET;
-    srcAddr.sin_addr.s_addr = htonl(INDDR_ANY);
+    srcAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     //ソケットの生成
     srcSocket = socket(AF_INET, SOCK_STREAM, 0);
 
     //ソケットのバインド
-    bind(srcSocket, &srcAddr, sizeof(srcAddr));
+    bind(srcSocket, (struct sockaddr *) &srcAddr, sizeof(srcAddr));
 
     //接続準備
     listen(srcSocket, 1);
 
     //接続の受付
     std::cout << "Waiting for connection ..." << std::endl;
-    dstSocket = accept(srcSocket, &dstAddr, dstAddrSize);
+    dstSocket = accept(srcSocket, (struct sockaddr *) &dstAddr, (socklen_t *)&dstAddrSize);
     std::cout << "Connected from " << inet_ntoa(dstAddr.sin_addr) << std::endl;
 
     //パケット受信
     while(1) {
         numrcv = recv(dstSocket, buffer, BUFFER_SIZE, 0);
         if(numrcv == 0 || numrcv == -1) {
-            status = close(dstSocket); break;
+            close(dstSocket); break;
         }
         std::printf("received: %s\n", buffer);
     }
