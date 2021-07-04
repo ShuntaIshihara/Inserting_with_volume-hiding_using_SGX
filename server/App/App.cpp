@@ -17,12 +17,13 @@ sgx_enclave_id_t global_eid = 0;
 int n_table = 1;
 int size = 10;
 
+struct keyvalue stash[2];
+
 //OCALL implementation
-void ocall_return_stash(struct keyvalue stash[2])
+void ocall_return_stash(struct keyvalue st[2])
 {
-    std::cout << "stash = {";
-    std::cout << std::hex << stash[0].key << ", ";
-    std::cout << std::hex << stash[1].key << "}" << std::endl;
+    stash[0] = st[0];
+    stash[1] = st[1];
 }
 
 void ocall_err_different_size(const char *str)
@@ -37,10 +38,9 @@ void ocall_err_print(sgx_status_t *st)
     //↓↓↓例外処理を入れる↓↓↓
 }
 
-void ocall_print(int *h)
+void ocall_print(const char *str)
 {
-    std::cout << "rnd = ";
-    std::cout << *h << std::endl;
+    std::cout << str << std::endl;
 }
 
 /* Enclave initialization function */
@@ -200,6 +200,12 @@ void table_init(struct keyvalue table[1][2][10])
     }
 }
 
+void acpy(unsigned char cpy[], char data[])
+{
+    for (int i = 0; i < 256; ++i) {
+        cpy[i] = data[i];
+    }
+}
 
 int main()
 {
@@ -266,35 +272,38 @@ int main()
 		exit(1); //異常終了
 	}
 
-	//受信
-	char str[12]; //受信用データ格納用
-	recv(connect, str, 12, 0); //受信
-	std::cout << str << std::endl; //標準出力
-
-	//送信
-	send(connect, str, 12, 0); //送信
-	std::cout << str << std::endl; //標準出力
-
-	//ソケットクローズ
-	close(connect);
-	close(sockfd);
-
-    //データの挿入操作
     struct keyvalue data;
-    ecall_encrypt(global_eid, data.key, (unsigned char *)"key");
-    for (int i = 0; i < 10; i++) {
-        sgx_status_t status = ecall_encrypt(global_eid, data.value[i], (unsigned char *)"value");
-        if (status != SGX_SUCCESS) {
-            sgx_error_print(status);
-            return -1;
-        }
+
+	//受信
+	char key[256]; //受信用データ格納用
+	recv(connect, key, 256, 0); //受信
+    acpy(data.key, key);
+	std::cout << data.key << std::endl; //標準出力
+
+    for (int i = 0; i < 10; ++i) {
+        char value[256];
+        recv(connect, value, 256, 0);
+        acpy(data.value[i], value);
+        std::cout << data.value[i] << std::endl;
     }
+
 
     status = ecall_insertion_start(global_eid, table[0], &data, &size);
     if (status != SGX_SUCCESS) {
         sgx_error_print(status);
 
         return -1;
+    }
+
+	//送信
+	send(connect, (char *)stash[0].key, 256, 0); //送信
+    for (int i = 0; i < 10; i++) {
+        send(connect, stash[0].value[i], 256, 0);
+    }
+
+    send(connect, (char *)stash[1].key, 256, 0);
+    for (int i = 0; i < 10; i++) {
+        send(connect, stash[1].value[i], 256, 0);
     }
 
     /* test
@@ -318,6 +327,10 @@ int main()
     ecall_decrypt(global_eid, dec, table[0][0][0].value[0]);
     std::cout << dec << std::endl;
     */
+
+	//ソケットクローズ
+	close(connect);
+	close(sockfd);
 
 	/* Destruct the enclave */
 	sgx_destroy_enclave(global_eid);

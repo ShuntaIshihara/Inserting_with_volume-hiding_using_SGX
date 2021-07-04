@@ -27,7 +27,7 @@ typedef struct ms_ocall_err_print_t {
 } ms_ocall_err_print_t;
 
 typedef struct ms_ocall_print_t {
-	int* ms_rnd;
+	const char* ms_str;
 } ms_ocall_print_t;
 
 typedef struct ms_ocall_return_stash_t {
@@ -53,7 +53,7 @@ static sgx_status_t SGX_CDECL Enclave_ocall_err_print(void* pms)
 static sgx_status_t SGX_CDECL Enclave_ocall_print(void* pms)
 {
 	ms_ocall_print_t* ms = SGX_CAST(ms_ocall_print_t*, pms);
-	ocall_print(ms->ms_rnd);
+	ocall_print(ms->ms_str);
 
 	return SGX_SUCCESS;
 }

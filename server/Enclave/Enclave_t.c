@@ -53,7 +53,7 @@ typedef struct ms_ocall_err_print_t {
 } ms_ocall_err_print_t;
 
 typedef struct ms_ocall_print_t {
-	int* ms_rnd;
+	const char* ms_str;
 } ms_ocall_print_t;
 
 typedef struct ms_ocall_return_stash_t {
@@ -431,19 +431,19 @@ sgx_status_t SGX_CDECL ocall_err_print(sgx_status_t* st)
 	return status;
 }
 
-sgx_status_t SGX_CDECL ocall_print(int* rnd)
+sgx_status_t SGX_CDECL ocall_print(const char* str)
 {
 	sgx_status_t status = SGX_SUCCESS;
-	size_t _len_rnd = sizeof(int);
+	size_t _len_str = str ? strlen(str) + 1 : 0;
 
 	ms_ocall_print_t* ms = NULL;
 	size_t ocalloc_size = sizeof(ms_ocall_print_t);
 	void *__tmp = NULL;
 
 
-	CHECK_ENCLAVE_POINTER(rnd, _len_rnd);
+	CHECK_ENCLAVE_POINTER(str, _len_str);
 
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (rnd != NULL) ? _len_rnd : 0))
+	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (str != NULL) ? _len_str : 0))
 		return SGX_ERROR_INVALID_PARAMETER;
 
 	__tmp = sgx_ocalloc(ocalloc_size);
@@ -455,20 +455,20 @@ sgx_status_t SGX_CDECL ocall_print(int* rnd)
 	__tmp = (void *)((size_t)__tmp + sizeof(ms_ocall_print_t));
 	ocalloc_size -= sizeof(ms_ocall_print_t);
 
-	if (rnd != NULL) {
-		ms->ms_rnd = (int*)__tmp;
-		if (_len_rnd % sizeof(*rnd) != 0) {
+	if (str != NULL) {
+		ms->ms_str = (const char*)__tmp;
+		if (_len_str % sizeof(*str) != 0) {
 			sgx_ocfree();
 			return SGX_ERROR_INVALID_PARAMETER;
 		}
-		if (memcpy_s(__tmp, ocalloc_size, rnd, _len_rnd)) {
+		if (memcpy_s(__tmp, ocalloc_size, str, _len_str)) {
 			sgx_ocfree();
 			return SGX_ERROR_UNEXPECTED;
 		}
-		__tmp = (void *)((size_t)__tmp + _len_rnd);
-		ocalloc_size -= _len_rnd;
+		__tmp = (void *)((size_t)__tmp + _len_str);
+		ocalloc_size -= _len_str;
 	} else {
-		ms->ms_rnd = NULL;
+		ms->ms_str = NULL;
 	}
 	
 	status = sgx_ocall(2, ms);

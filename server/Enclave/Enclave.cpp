@@ -24,6 +24,7 @@ void ecall_generate_keys()
     n, d, (unsigned char *)&e, p, q, dmp1, dmq1, iqmp);
 
     if (st != SGX_SUCCESS) {
+        ocall_print("generate keys");
         ocall_err_print(&st);
     }
 
@@ -33,6 +34,7 @@ void ecall_generate_keys()
     (const unsigned char *)dmq1, (const unsigned char *)iqmp, &priv_key);
 
     if (st != SGX_SUCCESS) {
+        ocall_print("generate keys");
         ocall_err_print(&st);
     }
 
@@ -41,6 +43,7 @@ void ecall_generate_keys()
     (const unsigned char *)n, (const unsigned char *)&e, &pub_key);
 
     if (st != SGX_SUCCESS) {
+        ocall_print("generate keys");
         ocall_err_print(&st);
     }
 }
@@ -51,12 +54,14 @@ void ecall_encrypt(unsigned char t_data[256], unsigned char *data)
     sgx_status_t status = sgx_rsa_pub_encrypt_sha256(pub_key, NULL, &size,
     (const unsigned char *)data, strlen((const char *)data)+1);
     if (status != SGX_SUCCESS) {
+        ocall_print("ecall_encrypt");
         ocall_err_print(&status);
     }
     if (size == 256) {
         status = sgx_rsa_pub_encrypt_sha256(pub_key, t_data, &size,
         (const unsigned char *)data, strlen((const char *)data)+1);
     } else {
+        ocall_print("ecall_encrypt");
         ocall_err_different_size("different size");
     }
 }
@@ -68,6 +73,7 @@ void ecall_decrypt(unsigned char dec[256], unsigned char enc[256])
     sgx_status_t status = sgx_rsa_priv_decrypt_sha256(priv_key, NULL, &dec_len,
     (const unsigned char *)enc, enc_len);
     if (status != SGX_SUCCESS) {
+        ocall_print("ecall_decrypt");
         ocall_err_print(&status);
     }
 
@@ -75,6 +81,7 @@ void ecall_decrypt(unsigned char dec[256], unsigned char enc[256])
     status = sgx_rsa_priv_decrypt_sha256(priv_key, dec_key, &dec_len,
     (const unsigned char *)enc, enc_len);
     if (status != SGX_SUCCESS) {
+        ocall_print("ecall_decrypt");
         ocall_err_print(&status);
     }
 
@@ -87,6 +94,7 @@ void encrypt(unsigned char enc[256], unsigned char *data)
     sgx_status_t status = sgx_rsa_pub_encrypt_sha256(pub_key, NULL, &size,
     (const unsigned char *)data, strlen((const char *)data)+1);
     if (status != SGX_SUCCESS) {
+        ocall_print("encrypt");
         ocall_err_print(&status);
     }
 
@@ -94,6 +102,7 @@ void encrypt(unsigned char enc[256], unsigned char *data)
         status = sgx_rsa_pub_encrypt_sha256(pub_key, enc, &size,
         (const unsigned char *)data, strlen((const char *)data)+1);
     } else {
+        ocall_print("encrypt");
         ocall_err_different_size("different size");
     }
 }
@@ -105,6 +114,7 @@ unsigned char* decrypt(unsigned char key[256])
     sgx_status_t status = sgx_rsa_priv_decrypt_sha256(priv_key, NULL, &dec_len,
     (const unsigned char *)key, enc_len);
     if (status != SGX_SUCCESS) {
+        ocall_print("decrypt");
         ocall_err_print(&status);
     }
 
@@ -112,6 +122,7 @@ unsigned char* decrypt(unsigned char key[256])
     status = sgx_rsa_priv_decrypt_sha256(priv_key, dec_key, &dec_len,
     (const unsigned char *)key, enc_len);
     if (status != SGX_SUCCESS) {
+        ocall_print("decrypt");
         ocall_err_print(&status);
     }
 
@@ -187,6 +198,7 @@ void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue *data, 
     int rand;
     sgx_status_t status = sgx_read_rand((unsigned char *)&rand, 4);
     if (status != SGX_SUCCESS) {
+        ocall_print("random");
         ocall_err_print(&status);
     }
     wchar_t wc[32];
@@ -197,6 +209,7 @@ void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue *data, 
         v[6] = '\0';
         status = sgx_read_rand((unsigned char *)&rand, 4);
         if (status != SGX_SUCCESS) {
+            ocall_print("random");
             ocall_err_print(&status);
         }
         swprintf(wc, sizeof(wc)/sizeof(wchar_t), L"%d", rand);

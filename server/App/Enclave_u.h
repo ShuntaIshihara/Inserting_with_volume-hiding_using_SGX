@@ -34,7 +34,7 @@ void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_err_print, (sgx_status_t* st));
 #endif
 #ifndef OCALL_PRINT_DEFINED__
 #define OCALL_PRINT_DEFINED__
-void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_print, (int* rnd));
+void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_print, (const char* str));
 #endif
 #ifndef OCALL_RETURN_STASH_DEFINED__
 #define OCALL_RETURN_STASH_DEFINED__
