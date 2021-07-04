@@ -19,7 +19,7 @@ enclave
 		/*These are OCALL defines.*/
         void ocall_err_different_size([in, string]const char *str);
         void ocall_err_print([in]sgx_status_t *st);
-        void ocall_print([in]int *rnd);
+        void ocall_print([in, string]const char *str);
         void ocall_return_stash([in]struct keyvalue stash[2]);
 	};
 };

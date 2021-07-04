@@ -1,51 +1,51 @@
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#include <iostream> //標準入出力
+#include <sys/socket.h> //アドレスドメイン
+#include <sys/types.h> //ソケットタイプ
+#include <arpa/inet.h> //バイトオーダの変換に利用
+#include <unistd.h> //close()に利用
+#include <string> //string型
+#include <cstring>
 
-int
-main() {
-  /* IP アドレス、ポート番号、ソケット */
-  char destination[80];
-  unsigned short port = 9876;
-  int dstSocket;
+int main(){
 
-  /* sockaddr_in 構造体 */
-  struct sockaddr_in dstAddr;
+	//ソケットの生成
+	int sockfd = socket(AF_INET, SOCK_STREAM, 0); //アドレスドメイン, ソケットタイプ, プロトコル
+	if(sockfd < 0){ //エラー処理
 
-  /* 各種パラメータ */
-  int status;
-  int numsnt;
-  char *toSendText = "This is a test";
+		std::cout << "Error socket:" << std::strerror(errno); //標準出力
+		exit(1); //異常終了
+	}
 
-  /************************************************************/
-  /* 相手先アドレスの入力 */
-  printf("Connect to ? : (name or IP address) ");
-  scanf("%s", destination);
+	//アドレスの生成
+	struct sockaddr_in addr; //接続先の情報用の構造体(ipv4)
+	memset(&addr, 0, sizeof(struct sockaddr_in)); //memsetで初期化
+	addr.sin_family = AF_INET; //アドレスファミリ(ipv4)
+	addr.sin_port = htons(8080); //ポート番号,htons()関数は16bitホストバイトオーダーをネットワークバイトオーダーに変換
+	addr.sin_addr.s_addr = inet_addr("127.0.0.1"); //IPアドレス,inet_addr()関数はアドレスの翻訳
 
-  /* sockaddr_in 構造体のセット */
-  memset(&dstAddr, 0, sizeof(dstAddr));
-  dstAddr.sin_port = htons(port);
-  dstAddr.sin_family = AF_INET;
-  stAddr.sin_addr.s_addr = inet_addr(destination);
- 
-  /* ソケット生成 */
-  dstSocket = socket(AF_INET, SOCK_STREAM, 0);
+	//ソケット接続要求
+	connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)); //ソケット, アドレスポインタ, アドレスサイズ
 
-  /* 接続 */
-  printf("Trying to connect to %s: \n", destination);
-  connect(dstSocket, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
+    //データの挿入操作
+    unsigned char key[256] = "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
+	send(sockfd, (char *)key, 256, 0); //送信
+	std::cout << (char *)key << std::endl;
 
-  /* パケット送出 */
-  for(i=0; i<10; i++) {
-    printf("sending...\n");
-    send(dstSocket, toSendText, strlen(toSendText)+1, 0);
-    sleep(1);
-  }
+    for (int i = 0; i < 10; ++i) {
+        unsigned char value[256] = "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
+        send(sockfd, (char *)value, 256, 0);
+        std::cout << (char *)value << std::endl;
+    }
 
-  /* ソケット終了 */
-  close(dstSocket);
+	//データ受信
+    for (int i = 0; i < 11; ++i) {
+        unsigned char r_str[256]; //受信データ格納用
+        recv(sockfd, (char *)r_str, 256, 0); //受信
+        std::cout << (char *)r_str << std::endl; //標準出力
+    }
+
+	//ソケットクローズ
+	close(sockfd);
+
+	return 0;
 }
-
