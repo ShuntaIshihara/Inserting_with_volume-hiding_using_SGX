@@ -156,6 +156,7 @@ int client_rsa_decrypt_sha256(const void* rsa_key, unsigned char* pout_data, siz
 }
 
 int main(){
+    /*
 
 	//ソケットの生成
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0); //アドレスドメイン, ソケットタイプ, プロトコル
@@ -216,6 +217,13 @@ int main(){
 
 	//ソケットクローズ
 	close(sockfd);
+*/
+    char *pub_key = "0ASR";
+    unsigned char value[256];
+size = 256;
+unsigned char *in_value = "hello world";
+    status = client_rsa_encrypt_sha256((const void *)pub_key, value, (size_t *)&size, in_value, std::strlen((const char     *)in_value)+1);
+
 
 	return 0;
 }
