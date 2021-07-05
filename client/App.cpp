@@ -220,9 +220,9 @@ int main(){
 */
     char *pub_key = "0ASR";
     unsigned char value[256];
-size = 256;
-unsigned char *in_value = "hello world";
-    status = client_rsa_encrypt_sha256((const void *)pub_key, value, (size_t *)&size, in_value, std::strlen((const char     *)in_value)+1);
+int size = 256;
+unsigned char *in_value = (unsigned char *)"hello world";
+    int status = client_rsa_encrypt_sha256((const void *)pub_key, value, (size_t *)&size, in_value, std::strlen((const char     *)in_value)+1);
 
 
 	return 0;
