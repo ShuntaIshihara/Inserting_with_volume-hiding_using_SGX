@@ -8,7 +8,15 @@ enclave
 	trusted
 	{
 		/*These are ECALL defines.*/
-        public void ecall_generate_keys();
+        public void ecall_generate_keys(
+                [in,out]unsigned char n[256], 
+                [in,out]unsigned char d[256], 
+                [in,out]unsigned char p[256], 
+                [in,out]unsigned char q[256], 
+                [in,out]unsigned char dmp1[256], 
+                [in,out]unsigned char dmq1[256], 
+                [in,out]unsigned char iqmp[256],
+                [in,out]long *e);
         public void ecall_encrypt([in,out]unsigned char t_data[256], [in,string]unsigned char *data);
         public void ecall_decrypt([in,out]unsigned char dec[256], [in]unsigned char enc[256]);
 		public void ecall_insertion_start([in,out]struct keyvalue table[2][10], [in]struct keyvalue *data, [in]int *size);
@@ -21,5 +29,6 @@ enclave
         void ocall_err_print([in]sgx_status_t *st);
         void ocall_print([in, string]const char *str);
         void ocall_return_stash([in]struct keyvalue stash[2]);
+        void ocall_print_e([in]long *e);
 	};
 };
