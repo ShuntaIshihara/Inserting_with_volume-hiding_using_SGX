@@ -1,6 +1,17 @@
 #include "Enclave_u.h"
 #include <errno.h>
 
+typedef struct ms_ecall_generate_keys_t {
+	unsigned char* ms_n;
+	unsigned char* ms_d;
+	unsigned char* ms_p;
+	unsigned char* ms_q;
+	unsigned char* ms_dmp1;
+	unsigned char* ms_dmq1;
+	unsigned char* ms_iqmp;
+	long int* ms_e;
+} ms_ecall_generate_keys_t;
+
 typedef struct ms_ecall_encrypt_t {
 	unsigned char* ms_t_data;
 	unsigned char* ms_data;
@@ -34,6 +45,10 @@ typedef struct ms_ocall_return_stash_t {
 	struct keyvalue* ms_stash;
 } ms_ocall_return_stash_t;
 
+typedef struct ms_ocall_print_e_t {
+	long int* ms_e;
+} ms_ocall_print_e_t;
+
 static sgx_status_t SGX_CDECL Enclave_ocall_err_different_size(void* pms)
 {
 	ms_ocall_err_different_size_t* ms = SGX_CAST(ms_ocall_err_different_size_t*, pms);
@@ -66,22 +81,40 @@ static sgx_status_t SGX_CDECL Enclave_ocall_return_stash(void* pms)
 	return SGX_SUCCESS;
 }
 
+static sgx_status_t SGX_CDECL Enclave_ocall_print_e(void* pms)
+{
+	ms_ocall_print_e_t* ms = SGX_CAST(ms_ocall_print_e_t*, pms);
+	ocall_print_e(ms->ms_e);
+
+	return SGX_SUCCESS;
+}
+
 static const struct {
 	size_t nr_ocall;
-	void * table[4];
+	void * table[5];
 } ocall_table_Enclave = {
-	4,
+	5,
 	{
 		(void*)Enclave_ocall_err_different_size,
 		(void*)Enclave_ocall_err_print,
 		(void*)Enclave_ocall_print,
 		(void*)Enclave_ocall_return_stash,
+		(void*)Enclave_ocall_print_e,
 	}
 };
-sgx_status_t ecall_generate_keys(sgx_enclave_id_t eid)
+sgx_status_t ecall_generate_keys(sgx_enclave_id_t eid, unsigned char n[256], unsigned char d[256], unsigned char p[256], unsigned char q[256], unsigned char dmp1[256], unsigned char dmq1[256], unsigned char iqmp[256], long int* e)
 {
 	sgx_status_t status;
-	status = sgx_ecall(eid, 0, &ocall_table_Enclave, NULL);
+	ms_ecall_generate_keys_t ms;
+	ms.ms_n = (unsigned char*)n;
+	ms.ms_d = (unsigned char*)d;
+	ms.ms_p = (unsigned char*)p;
+	ms.ms_q = (unsigned char*)q;
+	ms.ms_dmp1 = (unsigned char*)dmp1;
+	ms.ms_dmq1 = (unsigned char*)dmq1;
+	ms.ms_iqmp = (unsigned char*)iqmp;
+	ms.ms_e = e;
+	status = sgx_ecall(eid, 0, &ocall_table_Enclave, &ms);
 	return status;
 }
 

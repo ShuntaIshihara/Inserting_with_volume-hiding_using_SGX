@@ -11,6 +11,7 @@
 #include "Enclave_u.h"
 #include <sgx_urts.h>
 #include "error_print.h"
+#include <openssl/evp.h>
 
 
 sgx_enclave_id_t global_eid = 0;
@@ -41,6 +42,11 @@ void ocall_err_print(sgx_status_t *st)
 void ocall_print(const char *str)
 {
     std::cout << str << std::endl;
+}
+
+void ocall_print_e(long *e)
+{
+    std::cout << "e = " << *e << std::endl;
 }
 
 /* Enclave initialization function */
@@ -217,9 +223,18 @@ int main()
 		return -1;
 	}
 
-    
     //暗号化キーの生成
-    sgx_status_t status = ecall_generate_keys(global_eid);
+    unsigned char n[256];    
+    unsigned char d[256];
+    unsigned char p[256];
+    unsigned char q[256];
+    unsigned char dmp1[256];
+    unsigned char dmq1[256];
+    unsigned char iqmp[256];
+    long e = 65537;
+
+    sgx_status_t status = ecall_generate_keys(global_eid,
+            n, d, p, q, dmp1, dmq1, iqmp, &e);
 
     if(status != SGX_SUCCESS)
     {
@@ -227,6 +242,7 @@ int main()
 
         return -1;
     }
+
 
     //Tableの初期化
     struct keyvalue table[n_table][2][10];
@@ -272,20 +288,30 @@ int main()
 		exit(1); //異常終了
 	}
 
+    //鍵の成分を送信
+    send(connect, n, 256, 0);
+    send(connect, d, 256, 0);
+    send(connect, p, 256, 0);
+    send(connect, q, 256, 0);
+    send(connect, dmp1, 256, 0);
+    send(connect, dmq1, 256, 0);
+    send(connect, iqmp, 256, 0);
+    send(connect, &e, sizeof(e), 0);
+
     struct keyvalue data;
 
 	//受信
-	char key[256]; //受信用データ格納用
-	recv(connect, key, 256, 0); //受信
-    acpy(data.key, key);
-	std::cout << data.key << std::endl; //標準出力
-
-    for (int i = 0; i < 10; ++i) {
-        char value[256];
-        recv(connect, value, 256, 0);
-        acpy(data.value[i], value);
-        std::cout << data.value[i] << std::endl;
-    }
+    int count = 0;
+    int bytes;
+    do {
+        bytes = recv(connect, &data + count, sizeof(struct keyvalue) - count, 0);
+        std::cout << bytes << std::endl;
+        if (bytes < 0) {
+            std::cerr << "recv data error\n";
+            return 1;
+        }
+        count += bytes;
+    }while(count < sizeof(struct keyvalue));
 
 
     status = ecall_insertion_start(global_eid, table[0], &data, &size);
@@ -295,18 +321,10 @@ int main()
         return -1;
     }
 
-	//送信
-	send(connect, (char *)stash[0].key, 256, 0); //送信
-    for (int i = 0; i < 10; i++) {
-        send(connect, stash[0].value[i], 256, 0);
-    }
+	//stash送信
+	send(connect, &stash[0], sizeof(struct keyvalue), 0); //送信
+    send(connect, &stash[1], sizeof(struct keyvalue), 0);
 
-    send(connect, (char *)stash[1].key, 256, 0);
-    for (int i = 0; i < 10; i++) {
-        send(connect, stash[1].value[i], 256, 0);
-    }
-
-    /* test
     unsigned char dec[256];
     std::cout << "T1 = {";
     for (int i = 0; i < 9; i++) {
@@ -323,10 +341,6 @@ int main()
     }
     ecall_decrypt(global_eid, dec, table[0][1][9].key);
     std::cout << dec << "}" << std::endl;
-
-    ecall_decrypt(global_eid, dec, table[0][0][0].value[0]);
-    std::cout << dec << std::endl;
-    */
 
 	//ソケットクローズ
 	close(connect);

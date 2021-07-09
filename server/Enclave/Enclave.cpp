@@ -6,32 +6,45 @@
 
 //公開鍵、秘密鍵の生成
 int n_byte_size = 256;
-unsigned char n[256];
-unsigned char d[256];
-unsigned char p[256];
-unsigned char q[256];
-unsigned char dmp1[256];
-unsigned char dmq1[256];
-unsigned char iqmp[256];
-long e = 65537;
+//unsigned char n[256];
+//unsigned char d[256];
+//unsigned char p[256];
+//unsigned char q[256];
+//unsigned char dmp1[256];
+//unsigned char dmq1[256];
+//unsigned char iqmp[256];
+//long e = 65537;
 void *priv_key = NULL;
 void *pub_key = NULL;
 
-void ecall_generate_keys()
+void ecall_generate_keys(
+unsigned char n[256],
+unsigned char d[256],
+unsigned char p[256],
+unsigned char q[256],
+unsigned char dmp1[256],
+unsigned char dmq1[256],
+unsigned char iqmp[256],
+long *e
+)
 {
     //秘密鍵、公開鍵の成分を生成
     sgx_status_t st = sgx_create_rsa_key_pair(n_byte_size, sizeof(e),
-    n, d, (unsigned char *)&e, p, q, dmp1, dmq1, iqmp);
+    n, d, (unsigned char *)e, p, q, dmp1, dmq1, iqmp);
 
     if (st != SGX_SUCCESS) {
         ocall_print("generate keys");
         ocall_err_print(&st);
     }
 
+    ocall_print_e(e);
+
+
     //秘密鍵生成
-    st = sgx_create_rsa_priv2_key(n_byte_size, sizeof(e), (const unsigned char *)&e,
-    (const unsigned char *)p, (const unsigned char *)q, (const unsigned char *)dmp1,
-    (const unsigned char *)dmq1, (const unsigned char *)iqmp, &priv_key);
+    st = sgx_create_rsa_priv2_key(n_byte_size, sizeof(long), (const unsigned char *)e,
+            (const unsigned char *)p, (const unsigned char *)q, (const unsigned char *)dmp1,
+            (const unsigned char *)dmq1, (const unsigned char *)iqmp, &priv_key);
+
 
     if (st != SGX_SUCCESS) {
         ocall_print("generate keys");
@@ -39,15 +52,47 @@ void ecall_generate_keys()
     }
 
     //公開鍵生成
-    st = sgx_create_rsa_pub1_key(n_byte_size, sizeof(e),
-    (const unsigned char *)n, (const unsigned char *)&e, &pub_key);
+    st = sgx_create_rsa_pub1_key(n_byte_size, sizeof(long),
+            (const unsigned char *)n, (const unsigned char *)e, &pub_key);
 
     if (st != SGX_SUCCESS) {
         ocall_print("generate keys");
         ocall_err_print(&st);
     }
-}
 
+
+}
+/*
+void ecall_create_keys(unsigned char n[256],
+        unsigned char d[256],
+        unsigned char p[256],
+        unsigned char q[256],
+        unsigned char dmp1[256],
+        unsigned char dmq1[256],
+        unsigned char iqmp[256],
+        long *e)
+{
+    //秘密鍵生成
+    sgx_status_t status = sgx_create_rsa_priv2_key(n_byte_size, sizeof(e), (const unsigned char *)e,
+            (const unsigned char *)p, (const unsigned char *)q, (const unsigned char *)dmp1,
+            (const unsigned char *)dmq1, (const unsigned char *)iqmp, &priv_key);
+
+    if (status != SGX_SUCCESS) {
+        ocall_print("generate keys");
+        ocall_err_print(&status);
+    }
+
+    //公開鍵生成
+    status = sgx_create_rsa_pub1_key(n_byte_size, sizeof(long),
+            (const unsigned char *)n, (const unsigned char *)&e, &pub_key);
+
+    if (status != SGX_SUCCESS) {
+        ocall_print("generate keys");
+        ocall_err_print(&status);
+    }
+
+}
+*/
 void ecall_encrypt(unsigned char t_data[256], unsigned char *data)
 {
     size_t size = 0;
@@ -221,3 +266,4 @@ void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue *data, 
     //OCALLでstashに格納するものをクライアントに返す
     ocall_return_stash(stash);
 }
+
