@@ -431,7 +431,7 @@ int main(){
 	memset(&addr, 0, sizeof(struct sockaddr_in)); //memsetで初期化
 	addr.sin_family = AF_INET; //アドレスファミリ(ipv4)
 	addr.sin_port = htons(8080); //ポート番号,htons()関数は16bitホストバイトオーダーをネットワークバイトオーダーに変換
-	addr.sin_addr.s_addr = inet_addr("127.0.0.1"); //IPアドレス,inet_addr()関数はアドレスの翻訳
+	addr.sin_addr.s_addr = inet_addr("40.65.118.71"); //IPアドレス,inet_addr()関数はアドレスの翻訳
 
 	//ソケット接続要求
 	connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)); //ソケット, アドレスポインタ, アドレスサイズ
