@@ -303,6 +303,7 @@ int main()
 	//受信
     int count = 0;
     int bytes;
+    for (int i = 0; i < 10; i++) {
     do {
         bytes = recv(connect, &data + count, sizeof(struct keyvalue) - count, 0);
         std::cout << bytes << std::endl;
@@ -341,7 +342,7 @@ int main()
     }
     ecall_decrypt(global_eid, dec, table[0][1][9].key);
     std::cout << dec << "}" << std::endl;
-
+}
 	//ソケットクローズ
 	close(connect);
 	close(sockfd);

@@ -431,7 +431,8 @@ int main(){
 	memset(&addr, 0, sizeof(struct sockaddr_in)); //memsetで初期化
 	addr.sin_family = AF_INET; //アドレスファミリ(ipv4)
 	addr.sin_port = htons(8080); //ポート番号,htons()関数は16bitホストバイトオーダーをネットワークバイトオーダーに変換
-	addr.sin_addr.s_addr = inet_addr("40.65.118.71"); //IPアドレス,inet_addr()関数はアドレスの翻訳
+//    addr.sin_addr.s_addr = inet_addr("40.65.118.71"); //IPアドレス,inet_addr()関数はアドレスの翻訳
+    addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 
 	//ソケット接続要求
 	connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)); //ソケット, アドレスポインタ, アドレスサイズ
@@ -585,7 +586,7 @@ int main(){
     size_t dec_len = 0;
     std::string line;
     while(std::cin >> line) {
-        unsigned char *in_key = (unsigned char *)"This is a key.";
+        unsigned char *in_key = (unsigned char*)line.c_str();
         int size = 256;
         status = client_rsa_encrypt_sha256((const void *)pub_key, data.key, (size_t *)&size, in_key, std::strlen((const char *)in_key)+1);
         client_err_print(status);
@@ -598,140 +599,141 @@ int main(){
         }
 
         for (int i = 0; i < 10; ++i) {
-            unsigned char *in_value = (unsigned char *)"This is a value.";
+            std::cin >> line;
+            unsigned char *in_value = (unsigned char*)line.c_str();
             status = client_rsa_encrypt_sha256((const void *)pub_key, 
                     data.value[0], (size_t *)&size, in_value, std::strlen((const char *)in_value)+1);
             client_err_print(status);
             std::cout << i << std::endl;
         }
         send(sockfd, &data, sizeof(struct keyvalue), 0); //送信
-    }
 
-	//stash受信
-    struct keyvalue stash[2];
-    count = 0;
-    do {
-        bytes = recv(sockfd, &stash[0], sizeof(struct keyvalue), 0);
-        std::cout << "bytes = " << bytes << std::endl;
-        if (bytes < 0) {
-            std::cerr << "recv stash[0] error\n";
-            return 1;
-        }
-        count+=bytes;
-    }while(count < 256);
+        //stash受信
+        struct keyvalue stash[2];
+        count = 0;
+        do {
+            bytes = recv(sockfd, &stash[0], sizeof(struct keyvalue), 0);
+            std::cout << "bytes = " << bytes << std::endl;
+            if (bytes < 0) {
+                std::cerr << "recv stash[0] error\n";
+                return 1;
+            }
+            count+=bytes;
+        }while(count < 256);
 
-    count = 0;
-    do {
-        bytes = recv(sockfd, &stash[1], sizeof(struct keyvalue), 0);
-        std::cout << "bytes = " << bytes << std::endl;
-        if (bytes < 0) {
-            std::cerr << "recv stash[1] error\n";
-            return 1;
-        }
-        count+=bytes;
-    }while(count < 256);
+        count = 0;
+        do {
+            bytes = recv(sockfd, &stash[1], sizeof(struct keyvalue), 0);
+            std::cout << "bytes = " << bytes << std::endl;
+            if (bytes < 0) {
+                std::cerr << "recv stash[1] error\n";
+                return 1;
+            }
+            count+=bytes;
+        }while(count < 256);
 
-    std::cout << "stash[0] = {";
+        std::cout << "stash[0] = {";
 
-    status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-            (const unsigned char *)stash[0].key, enc_len);
-    if (status != SUCCESS) {
-        std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-        client_err_print(status);
-    }
-
-    unsigned char key0[dec_len];
-    status = client_rsa_decrypt_sha256(priv_key, key0, &dec_len,
-            (const unsigned char *)stash[0].key, enc_len);
-    if (status != SUCCESS) {
-        std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-        client_err_print(status);
-    }
-    std::cout << "key(" << key0 << "), value(";
-
-    for (int i = 0; i < 9; ++i) {
         status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)stash[0].value[i], enc_len);
+                (const unsigned char *)stash[0].key, enc_len);
         if (status != SUCCESS) {
             std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
             client_err_print(status);
         }
 
-        unsigned char value0[dec_len];
-        status = client_rsa_decrypt_sha256(priv_key, value0, &dec_len,
-                (const unsigned char *)stash[0].value[i], enc_len);
+        unsigned char key0[dec_len];
+        status = client_rsa_decrypt_sha256(priv_key, key0, &dec_len,
+                (const unsigned char *)stash[0].key, enc_len);
         if (status != SUCCESS) {
             std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
             client_err_print(status);
         }
-        std::cout << value0 << ", ";
-    }
-    status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-            (const unsigned char *)stash[0].value[9], enc_len);
-    if (status != SUCCESS) {
-        std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-        client_err_print(status);
-    }
+        std::cout << "key(" << key0 << "), value(";
 
-    unsigned char value1[dec_len];
-    status = client_rsa_decrypt_sha256(priv_key, value1, &dec_len,
-            (const unsigned char *)stash[0].value[9], enc_len);
-    if (status != SUCCESS) {
-        std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-        client_err_print(status);
-    }
-    std::cout << value1 << ")}\n";
+        for (int i = 0; i < 9; ++i) {
+            status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
+                    (const unsigned char *)stash[0].value[i], enc_len);
+            if (status != SUCCESS) {
+                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+                client_err_print(status);
+            }
 
-    std::cout << "stash[1] = {";
-
-    status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-            (const unsigned char *)stash[1].key, enc_len);
-    if (status != SUCCESS) {
-        std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-        client_err_print(status);
-    }
-
-    unsigned char key1[dec_len];
-    status = client_rsa_decrypt_sha256(priv_key, key1, &dec_len,
-            (const unsigned char *)stash[1].key, enc_len);
-    if (status != SUCCESS) {
-        std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-        client_err_print(status);
-    }
-    std::cout << "key(" << key1 << "), value(";
-
-    for (int i = 0; i < 9; ++i) {
+            unsigned char value0[dec_len];
+            status = client_rsa_decrypt_sha256(priv_key, value0, &dec_len,
+                    (const unsigned char *)stash[0].value[i], enc_len);
+            if (status != SUCCESS) {
+                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+                client_err_print(status);
+            }
+            std::cout << value0 << ", ";
+        }
         status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)stash[1].value[i], enc_len);
+                (const unsigned char *)stash[0].value[9], enc_len);
         if (status != SUCCESS) {
             std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
             client_err_print(status);
         }
 
-        unsigned char value2[dec_len];
-        status = client_rsa_decrypt_sha256(priv_key, value2, &dec_len,
-                (const unsigned char *)stash[1].value[i], enc_len);
+        unsigned char value1[dec_len];
+        status = client_rsa_decrypt_sha256(priv_key, value1, &dec_len,
+                (const unsigned char *)stash[0].value[9], enc_len);
         if (status != SUCCESS) {
             std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
             client_err_print(status);
         }
-        std::cout << value2 << ", ";
-    }
-    status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-            (const unsigned char *)stash[1].value[9], enc_len);
-    if (status != SUCCESS) {
-        std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-        client_err_print(status);
-    }
+        std::cout << value1 << ")}\n";
 
-    unsigned char value3[dec_len];
-    status = client_rsa_decrypt_sha256(priv_key, value3, &dec_len,
-            (const unsigned char *)stash[1].value[9], enc_len);
-    if (status != SUCCESS) {
-        std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-        client_err_print(status);
+        std::cout << "stash[1] = {";
+
+        status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
+                (const unsigned char *)stash[1].key, enc_len);
+        if (status != SUCCESS) {
+            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+            client_err_print(status);
+        }
+
+        unsigned char key1[dec_len];
+        status = client_rsa_decrypt_sha256(priv_key, key1, &dec_len,
+                (const unsigned char *)stash[1].key, enc_len);
+        if (status != SUCCESS) {
+            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+            client_err_print(status);
+        }
+        std::cout << "key(" << key1 << "), value(";
+
+        for (int i = 0; i < 9; ++i) {
+            status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
+                    (const unsigned char *)stash[1].value[i], enc_len);
+            if (status != SUCCESS) {
+                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+                client_err_print(status);
+            }
+
+            unsigned char value2[dec_len];
+            status = client_rsa_decrypt_sha256(priv_key, value2, &dec_len,
+                    (const unsigned char *)stash[1].value[i], enc_len);
+            if (status != SUCCESS) {
+                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+                client_err_print(status);
+            }
+            std::cout << value2 << ", ";
+        }
+        status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
+                (const unsigned char *)stash[1].value[9], enc_len);
+        if (status != SUCCESS) {
+            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+            client_err_print(status);
+        }
+
+        unsigned char value3[dec_len];
+        status = client_rsa_decrypt_sha256(priv_key, value3, &dec_len,
+                (const unsigned char *)stash[1].value[9], enc_len);
+        if (status != SUCCESS) {
+            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+            client_err_print(status);
+        }
+        std::cout << value3 << ")}\n";
     }
-    std::cout << value3 << ")}\n";
 
 
     //ソケットクローズ
