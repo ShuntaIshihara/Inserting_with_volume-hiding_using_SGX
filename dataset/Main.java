@@ -48,6 +48,7 @@ class Main {
                     cnt++;
                 }
             }
+            System.out.println();
             pw.close();
         } catch(IOException e) {
             e.printStackTrace();
