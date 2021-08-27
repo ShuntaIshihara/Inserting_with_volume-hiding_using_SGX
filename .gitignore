@@ -4,3 +4,6 @@ server/App/*.o
 server/Enclave/*.o
 *.o
 app
+dataset/Main
+dataset/*.txt
+client/*.txt

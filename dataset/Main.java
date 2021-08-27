@@ -41,14 +41,14 @@ class Main {
                     sb.append(getRandomString() + newline);
 
                 pw.print(sb.toString());
-                System.out.println(i);
-                //if (cnt == n/100) {
-                //    System.out.print("#");
-                //    cnt = 0;
-                //} else {
-                //    cnt++;
-                //}
+                if (cnt == n/100) {
+                    System.out.print("#");
+                    cnt = 0;
+                } else {
+                    cnt++;
+                }
             }
+            pw.close();
         } catch(IOException e) {
             e.printStackTrace();
         }
