@@ -301,9 +301,9 @@ int main()
     struct keyvalue data;
 
 	//受信
-    int count = 0;
-    int bytes;
     for (int i = 0; i < 10; i++) {
+        int count = 0;
+        int bytes;
         do {
             bytes = recv(connect, &data + count, sizeof(struct keyvalue) - count, 0);
             std::cout << bytes << std::endl;
@@ -313,6 +313,10 @@ int main()
             }
             count += bytes;
         }while(count < sizeof(struct keyvalue));
+
+        unsigned char check_data[256];
+        status = ecall_decrypt(global_eid, check_data, data.key);
+        std::cout << check_data << std::endl;
 
 
         status = ecall_insertion_start(global_eid, table[0], &data, &size);
