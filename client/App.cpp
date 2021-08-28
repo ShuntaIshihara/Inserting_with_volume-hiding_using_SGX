@@ -29,11 +29,6 @@ void *priv_key = NULL;
 void client_err_print(int status)
 {
     switch (status) {
-        case SUCCESS: std::cerr << "------------------------------" << std::endl;
-        std::cerr << "SUCCESS" << std::endl;
-        std::cerr << "status = " << (int)SUCCESS << std::endl;
-        std::cerr << "------------------------------" << std::endl;
-        break;
         case ERROR_UNEXPECTED: std::cerr << "------------------------------" << std::endl;
         std::cerr << "ERROR UNEXPECTED" << std::endl;
         std::cerr << "status = " << (int)ERROR_UNEXPECTED << std::endl;
@@ -581,11 +576,11 @@ int main(){
     }while(count < 8);
 */
     //データの挿入操作
-    struct keyvalue data;
-    size_t enc_len = 256;
-    size_t dec_len = 0;
     std::string line;
     while(std::cin >> line) {
+        struct keyvalue data;
+        size_t enc_len = 256;
+        size_t dec_len = 0;
         unsigned char *in_key = (unsigned char*)line.c_str();
         int size = 256;
         status = client_rsa_encrypt_sha256((const void *)pub_key, data.key, (size_t *)&size, in_key, std::strlen((const char *)in_key)+1);
@@ -602,10 +597,29 @@ int main(){
             std::cin >> line;
             unsigned char *in_value = (unsigned char*)line.c_str();
             status = client_rsa_encrypt_sha256((const void *)pub_key, 
-                    data.value[0], (size_t *)&size, in_value, std::strlen((const char *)in_value)+1);
+                    data.value[i], (size_t *)&size, in_value, std::strlen((const char *)in_value)+1);
             client_err_print(status);
-            std::cout << i << std::endl;
         }
+
+        /* 確認 */
+        status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
+                (const unsigned char *)data.key, enc_len);
+        if (status != SUCCESS) {
+            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+            client_err_print(status);
+        }
+
+        unsigned char check_key[dec_len];
+        status = client_rsa_decrypt_sha256(priv_key, check_key, &dec_len,
+                (const unsigned char *)data.key, enc_len);
+        if (status != SUCCESS) {
+            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+            client_err_print(status);
+        }
+        std::cout << check_key << std::endl;
+
+       /*  確認 */
+
         send(sockfd, &data, sizeof(struct keyvalue), 0); //送信
 
         //stash受信
