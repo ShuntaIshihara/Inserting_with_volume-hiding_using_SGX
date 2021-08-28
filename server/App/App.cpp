@@ -304,45 +304,45 @@ int main()
     int count = 0;
     int bytes;
     for (int i = 0; i < 10; i++) {
-    do {
-        bytes = recv(connect, &data + count, sizeof(struct keyvalue) - count, 0);
-        std::cout << bytes << std::endl;
-        if (bytes < 0) {
-            std::cerr << "recv data error\n";
-            return 1;
+        do {
+            bytes = recv(connect, &data + count, sizeof(struct keyvalue) - count, 0);
+            std::cout << bytes << std::endl;
+            if (bytes < 0) {
+                std::cerr << "recv data error\n";
+                return 1;
+            }
+            count += bytes;
+        }while(count < sizeof(struct keyvalue));
+
+
+        status = ecall_insertion_start(global_eid, table[0], &data, &size);
+        if (status != SGX_SUCCESS) {
+            sgx_error_print(status);
+
+            return -1;
         }
-        count += bytes;
-    }while(count < sizeof(struct keyvalue));
 
+        //stash送信
+        send(connect, &stash[0], sizeof(struct keyvalue), 0); //送信
+        send(connect, &stash[1], sizeof(struct keyvalue), 0);
 
-    status = ecall_insertion_start(global_eid, table[0], &data, &size);
-    if (status != SGX_SUCCESS) {
-        sgx_error_print(status);
+        unsigned char dec[256];
+        std::cout << "T1 = {";
+        for (int i = 0; i < 9; i++) {
+            ecall_decrypt(global_eid, dec, table[0][0][i].key);
+            std::cout << dec << ", ";
+        }
+        ecall_decrypt(global_eid, dec, table[0][0][9].key);
+        std::cout << dec << "}" << std::endl;
 
-        return -1;
+        std::cout << "T2 = {";
+        for (int i = 0; i < 9; i++) {
+            ecall_decrypt(global_eid, dec, table[0][1][i].key);
+            std::cout << dec << ", ";
+        }
+        ecall_decrypt(global_eid, dec, table[0][1][9].key);
+        std::cout << dec << "}" << std::endl;
     }
-
-	//stash送信
-	send(connect, &stash[0], sizeof(struct keyvalue), 0); //送信
-    send(connect, &stash[1], sizeof(struct keyvalue), 0);
-
-    unsigned char dec[256];
-    std::cout << "T1 = {";
-    for (int i = 0; i < 9; i++) {
-        ecall_decrypt(global_eid, dec, table[0][0][i].key);
-        std::cout << dec << ", ";
-    }
-    ecall_decrypt(global_eid, dec, table[0][0][9].key);
-    std::cout << dec << "}" << std::endl;
-
-    std::cout << "T2 = {";
-    for (int i = 0; i < 9; i++) {
-        ecall_decrypt(global_eid, dec, table[0][1][i].key);
-        std::cout << dec << ", ";
-    }
-    ecall_decrypt(global_eid, dec, table[0][1][9].key);
-    std::cout << dec << "}" << std::endl;
-}
 	//ソケットクローズ
 	close(connect);
 	close(sockfd);
