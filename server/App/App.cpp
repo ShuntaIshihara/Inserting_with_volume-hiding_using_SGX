@@ -12,6 +12,11 @@
 #include <sgx_urts.h>
 #include "error_print.h"
 #include <openssl/evp.h>
+#include <gmp.h>
+#include "paillier.h"
+#include <fstream>
+#include <assert.h>
+
 
 
 sgx_enclave_id_t global_eid = 0;
@@ -223,7 +228,7 @@ int main()
 		return -1;
 	}
 
-    //暗号化キーの生成
+    //sgxrsa暗号化キーの生成
     unsigned char n[256];    
     unsigned char d[256];
     unsigned char p[256];
@@ -243,10 +248,26 @@ int main()
         return -1;
     }
 
+    std::fstream pubKeyFile("pubkey.txt", std::fstream::in);
+
+    assert(pubKeyFile.is_open());
+
+    std::string hexPubKey;
+    std::getline(pubKeyFile, hexPubKey);
+
+    pubKeyFile.close();
+
+    paillier_pubkey_t* pubKey = paillier_pubkey_from_hex(&hexPubKey[0]);
 
     //Tableの初期化
     struct keyvalue table[n_table][2][10];
     table_init(table);
+
+    paillier_ciphertext_t* ctable[2][size];
+    for (int i = 0; i < size; i++) {
+        ctable[0][i] = paillier_create_enc_zero();
+        ctable[1][i] = paillier_create_enc_zero();
+    }
 
 	//ソケットの生成
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0); //アドレスドメイン, ソケットタイプ, プロトコル
@@ -347,7 +368,9 @@ int main()
         ecall_decrypt(global_eid, dec, table[0][1][9].key);
         std::cout << dec << "}" << std::endl;
     }
-	//ソケットクローズ
+
+	//Cleaning up
+    paillier_freepubkey(pubKey);
 	close(connect);
 	close(sockfd);
 
