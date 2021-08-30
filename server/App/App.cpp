@@ -2,8 +2,10 @@
 #include <cstring>
 #include <string>
 #include <random>
-#include <iostream>
-#include <iostream> //標準入出力
+#include <iostream> 
+#include <fstream>
+#include <assert.h>
+#include <stdlib.h>
 #include <sys/socket.h> //アドレスドメイン
 #include <sys/types.h> //ソケットタイプ
 #include <arpa/inet.h> //バイトオーダの変換に利用
@@ -14,9 +16,6 @@
 #include <openssl/evp.h>
 #include <gmp.h>
 #include "paillier.h"
-#include <fstream>
-#include <assert.h>
-
 
 
 sgx_enclave_id_t global_eid = 0;
@@ -24,6 +23,11 @@ int n_table = 1;
 int size = 10;
 
 struct keyvalue stash[2];
+
+struct homomorphism {
+    int h;
+    char* byteEncryptedOne;
+};
 
 //OCALL implementation
 void ocall_return_stash(struct keyvalue st[2])
@@ -249,15 +253,22 @@ int main()
     }
 
     std::fstream pubKeyFile("pubkey.txt", std::fstream::in);
+    std::fstream secKeyFile("seckey.txt", std::fstream::in);
 
     assert(pubKeyFile.is_open());
+    assert(secKeyFile.is_open());
 
     std::string hexPubKey;
+    std::string hexSecKey;
     std::getline(pubKeyFile, hexPubKey);
+    std::getline(secKeyFile, hexSecKey);
 
     pubKeyFile.close();
+    secKeyFile.close();
 
     paillier_pubkey_t* pubKey = paillier_pubkey_from_hex(&hexPubKey[0]);
+    paillier_prvkey_t* secKey = paillier_prvkey_from_hex(&hexSecKey[0], pubKey);
+
 
     //Tableの初期化
     struct keyvalue table[n_table][2][10];
@@ -319,12 +330,54 @@ int main()
     send(connect, iqmp, 256, 0);
     send(connect, &e, sizeof(e), 0);
 
-    struct keyvalue data;
 
 	//受信
     for (int i = 0; i < 10; i++) {
+        struct keyvalue data;
+        struct homomorphism cdata;
+        cdata.byteEncryptedOne = (char*)malloc(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
         int count = 0;
         int bytes;
+        //count tabel の更新
+        do {
+            bytes = recv(connect, &cdata + count,
+            sizeof(struct homomorphism) + PAILLIER_BITS_TO_BYTES(pubKey->bits)*2 - (count+1), 0);
+            if (bytes < 0) {
+                std::cerr << "recv cdata error!" << std::endl;
+                return 1;
+            }
+            count += bytes;
+        }while(count < sizeof(struct homomorphism)+PAILLIER_BITS_TO_BYTES(pubKey->bits)*2-1);
+
+        paillier_ciphertext_t* encryptedOne = paillier_ciphertext_from_bytes((void*)byteEncryptedOne, 
+        PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+        paillier_ciphertext_t* encryptedSum1 = paillier_create_enc_zero();
+        paillier_ciphertext_t* encryptedSum2 = paillier_create_enc_zero();
+
+
+        //ハッシュテーブルにした方がよさげ
+        paillier_mul(pubKey, encryptedSum1, ctable[0][cdata.h1], encryptedOne);
+        paillier_mul(pubKey, encryptedSum2, ctable[1][cdata.h2], encryptedOne);
+        std::memcpy(ctable[0][cdata.h1], encryptedSum1, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+        std::memcpy(ctable[1][cdata.h2], encryptedSum2, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+        // Decrypt the ciphertext (sum)
+        paillier_plaintext_t* dec;
+        dec = paillier_dec(NULL, pubKey, secKey, ctable[0][cdata.h1]);
+        gmp_printf("Decrypted ctable[0][cdata.h1]: %Zd\n", dec);    
+
+        paillier_freeciphertext(encryptedOne);
+        paillier_freeciphertext(encryptedSum1);
+        paillier_freeciphertext(encryptedSum2);
+        paillier_freeplaintext(dec);
+        free(cdata.byteEncryptedOne);
+        
+
+
+        //cuckoo hahsing の更新
+        count = 0;
         do {
             bytes = recv(connect, &data + count, sizeof(struct keyvalue) - count, 0);
             std::cout << bytes << std::endl;
@@ -370,7 +423,12 @@ int main()
     }
 
 	//Cleaning up
+    for (int i = 0; i < size; i++) {
+        paillier_freeciphertext(ctable[0][i]);
+        paillier_freeciphertext(ctable[1][i]);
+    }
     paillier_freepubkey(pubKey);
+    paillier_freeprvkey(secKey);
 	close(connect);
 	close(sockfd);
 
