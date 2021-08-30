@@ -189,6 +189,7 @@ int main(){
 */
     //データの挿入操作
     std::string line;
+    int cnt = 0;
     while(std::cin >> line) {
         struct keyvalue data;
         size_t enc_len = 256;
@@ -230,7 +231,11 @@ int main(){
         }
         std::cout << check_key << std::endl;
 
-       /*  確認 */
+        /*  確認 */
+
+        //count tableの更新
+        //randomized response
+        
 
         send(sockfd, &data, sizeof(struct keyvalue), 0); //送信
 
