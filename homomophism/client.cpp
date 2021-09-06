@@ -34,7 +34,8 @@ int main (int argc, char *argv[])
     paillier_prvkey_t* secKey = paillier_prvkey_from_hex(&hexSecKey[0], pubKey);
 
     // Read messages from disk
-    std::fstream message1File("message1.txt", std::fstream::in);
+    std::fstream message1File("message0.txt", std::fstream::in);
+    //std::fstream message1File("message1.txt", std::fstream::in);
     std::fstream message2File("message2.txt", std::fstream::in);
 
     assert(message1File.is_open());

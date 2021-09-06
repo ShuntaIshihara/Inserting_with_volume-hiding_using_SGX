@@ -6,10 +6,17 @@
 #include <string> //string型
 #include <cstring>
 #include <cstdlib>
+#include <sstream>
+#include <vector>
+#include <unordered_map>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/sha.h>
+#include <cereal/cereal.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/archives/binary.hpp>
 
 #include "define.h"
 
@@ -21,7 +28,19 @@ int client_create_rsa_pub1_key(int mod_size, int exp_size, const unsigned char *
 int client_rsa_encrypt_sha256(const void* rsa_key, unsigned char* pout_data, size_t* pout_len, const unsigned char* pin_data, const size_t pin_len);
 int client_rsa_decrypt_sha256(const void* rsa_key, unsigned char* pout_data, size_t* pout_len, const unsigned char* pin_data, const size_t pin_len);
 
+std::vector<int> randomized_response(double p, int key, int key_max);
+std::vector<int> select_0(double p, int key_max)
 
+struct homomorphism {
+    std::string h;
+    char* byteEncryptedValue;
+
+    template<class Archive>
+        void serialize(Archive & archive)
+    {
+        archive(name, hp);
+    }
+};
 
 int main(){
 
@@ -159,7 +178,7 @@ int main(){
             (const unsigned char *)n, (const unsigned char *)&e, &pub_key);
     client_err_print(status);
 
-/*
+//
     //公開鍵、秘密鍵の受信
     unsigned char pub_key[8];
     unsigned char priv_key[8];
@@ -186,15 +205,29 @@ int main(){
         }
         count += bytes;
     }while(count < 8);
-*/
+
+
+    //opnessl shaのコンテキスト初期化
+
+	SHA256_CTX sha_ctx;
+	SHA256_Init(&sha_ctx); // コンテキストを初期化
+
+    //キー -> キー番号　リストの宣言と初期化
+    std::unordered_map<std::string, int> n_list;
+
+    //キー番号 -> キー　リストの宣言と初期化
+    std::vector<std::string> key_list;
+
     //データの挿入操作
     std::string line;
+    int cnt = 0;
     while(std::cin >> line) {
         struct keyvalue data;
         size_t enc_len = 256;
         size_t dec_len = 0;
         unsigned char *in_key = (unsigned char*)line.c_str();
         int size = 256;
+        
         status = client_rsa_encrypt_sha256((const void *)pub_key, data.key, (size_t *)&size, in_key, std::strlen((const char *)in_key)+1);
         client_err_print(status);
 
@@ -204,6 +237,114 @@ int main(){
             std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
             client_err_print(status);
         }
+
+        
+        //新しいキーであれば、キーリストに追加
+        if (!key_list.contains(line)) {
+            n_list[line] = cnt;
+            key_list.push_back(line);
+            cnt++;
+        }
+
+        //randomized response
+        std::vector<int> keys = randomized_response(0.5, n_list[line], n_list.size());
+
+
+        //サーバーに送るキーのリスト
+        std::vector<struct homomorphism> s_list;
+
+        //byteEncryptedOneの生成
+        paillier_plaintext_t* m1 = paillier_plaintext_from_ui(1);
+        paillier_ciphertext_t* ctxt1;
+        ctxt1 = paillier_enc(NULL, pubKey, m1, paillier_get_rand_devurandom);
+        char* byteEncryptedOne = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt1);
+
+        for (int i = 0; i < (int)keys.size(); ++i) {
+            //sha256ハッシュ値生成
+            unsigned char digest[SHA256_DIGEST_LENGTH];
+
+            SHA256_Update(&sha_ctx, key_list[keys[i]], key_list[keys[i]].length());
+            SHA256_Final(digest, &sha_ctx);
+
+            // ハッシュ値を文字列に変換
+            std::string h = "";
+            for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
+                std::stringstream ss;
+                ss << std::hex << digest[j];
+                h.append(ss.str());
+            }
+            // 確認
+            std::cout << h << std::endl;
+
+            struct homomorphism w;
+            w.h = h;
+            w.byteEncryptedValue = byteEncryptedOne;
+
+            s_list.back_push(w);
+        }
+
+        paillier_freeplaintext(m1);
+        paillier_freeciphertext(ctxt1);
+        free(byteEncryptedOne);
+
+        //0を送るキーを選ぶ
+        std::vector<int> keys0 = select_0(0.5, n_list.size());
+
+        //byteEncryptedZeroを生成
+        paillier_plaintext_t* m0 = paillier_plaintext_from_ui(0);
+        paillier_ciphertext_t* ctxt0;
+        ctxt0 = paillier_enc(NULL, pubKey, m0, paillier_get_rand_devurandom);
+        char* byteEncryptedZero = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt0);
+
+        for (int i = 0; i < (int)keys0.size(); ++i) {
+            //sha256ハッシュ値生成
+            unsigned char digest[SHA256_DIGEST_LENGTH];
+
+            SHA256_Update(&sha_ctx, key_list[keys0[i]], key_list[keys0[i]].length());
+            SHA256_Final(digest, &sha_ctx);
+
+            // ハッシュ値を文字列に変換
+            std::string h = "";
+            for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
+                std::stringstream ss;
+                ss << std::hex << digest[j];
+                h.append(ss.str());
+            }
+            // 確認
+            std::cout << h << std::endl;
+
+            struct homomorphism w;
+            w.h = h;
+            w.byteEncryptedValue = byteEncryptedOne;
+
+            s_list.back_push(w);
+        }
+
+        paillier_freeplaintext(m0);
+        paillier_freeciphertext(ctxt0);
+        free(byteEncryptedZero);
+
+        //シリアライズ
+        std::stringstream ss;
+        {
+            cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
+            o_archive(s_list);
+        }
+        std::cout << ss.str() << std::endl;
+
+        char buffer[ss.str().size()];
+        std::memcpy(buffer, ss.str().data(), ss.str().size());
+
+        int size = ss.str().size();
+        std::cout << size << std::endl;
+
+        send(sockfd, &size, sizeof(int), 0);
+        send(sockfd, buffer, size, 0);
+
+        for (int i = 0; i < s_list.size(); ++i) {
+            free(s_list[i].byteEncryptedValue);
+        }
+
 
         for (int i = 0; i < 10; ++i) {
             std::cin >> line;
@@ -230,8 +371,9 @@ int main(){
         }
         std::cout << check_key << std::endl;
 
-       /*  確認 */
+        /* 確認 */
 
+                
         send(sockfd, &data, sizeof(struct keyvalue), 0); //送信
 
         //stash受信
@@ -359,6 +501,7 @@ int main(){
             client_err_print(status);
         }
         std::cout << value3 << ")}\n";
+        
     }
 
 
