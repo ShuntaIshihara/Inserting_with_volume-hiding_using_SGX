@@ -385,39 +385,39 @@ int main()
         paillier_ciphertext_t* encryptedOne = paillier_ciphertext_from_bytes((void*)byteEncryptedOne, 
         PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
-for (int i = 0; i < s_list.size(); ++i) {
-        if (!cindex.contains(c_list[i].h) {
-            index++;
-            cindex[c_list.h] = index;
-            paillier_plaintext_t* encryptedCnt = paillier_plaintext_from_ui(0);
-        } else {
-            paillier_ciphertext_t* encryptedCnt = paiilier_ciphertext_from_bytes((void*)ctable[cindex[c_list.h]],
-                    PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+        for (int i = 0; i < c_list.size(); ++i) {
+            if (!cindex.contains(c_list[i].h) {
+                    index++;
+                    cindex[c_list.h] = index;
+                    paillier_plaintext_t* encryptedCnt = paillier_plaintext_from_ui(0);
+                    } else {
+                    paillier_ciphertext_t* encryptedCnt = paiilier_ciphertext_from_bytes((void*)ctable[cindex[c_list.h]],
+                            PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+                    }
+
+                    paillier_ciphertext_t* encryptedSum = paillier_create_enc_zero();
+
+                    paillier_mul(pubKey, encryptedSum, encryptedCnt, encryptedOne);
+
+                    char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, 
+                        encryptedSum);
+
+                    std::memmove(ctable[cindex[c_list.h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+
+                    // Decrypt the ciphertext (sum)
+                    paillier_plaintext_t* dec;
+                    dec = paillier_dec(NULL, pubKey, secKey, ctable[0][c_list.h1]);
+                    gmp_printf("Decrypted ctable[0][c_list.h1]: %Zd\n", dec);
+
+
+                    paillier_freeciphertext(encryptedOne);
+                    paillier_freeciphertext(encryptedCnt);
+                    paillier_freeciphertext(encryptedSum);
+                    paillier_freeplaintext(dec);
+                    free(c_list[i].byteEncryptedOne);
+                    free(byteEncryptedSum);
         }
-        
-        paillier_ciphertext_t* encryptedSum = paillier_create_enc_zero();
-
-        paillier_mul(pubKey, encryptedSum, encryptedCnt, encryptedOne);
-
-        char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, 
-        encryptedSum);
-
-        std::memmove(ctable[cindex[c_list.h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-
-
-        // Decrypt the ciphertext (sum)
-        paillier_plaintext_t* dec;
-        dec = paillier_dec(NULL, pubKey, secKey, ctable[0][c_list.h1]);
-        gmp_printf("Decrypted ctable[0][c_list.h1]: %Zd\n", dec);
-
-
-        paillier_freeciphertext(encryptedOne);
-        paillier_freeciphertext(encryptedCnt);
-        paillier_freeciphertext(encryptedSum);
-        paillier_freeplaintext(dec);
-        free(c_list[i].byteEncryptedOne);
-        free(byteEncryptedSum);
-}        
 
 
         //cuckoo hahsing の更新
