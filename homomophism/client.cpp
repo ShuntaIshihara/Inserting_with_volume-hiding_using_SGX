@@ -90,6 +90,7 @@ int main (int argc, char *argv[])
 //    assert(ctxt2File.is_open());
 
     // The length of the ciphertext is twice the length of the key
+    std::cout << "PAILLIER_BITS_TO_BYTES(pubKey->bits)*2 = " << PAILLIER_BITS_TO_BYTES(pubKey->bits)*2 << std::endl;
     char* byteCtxt1 = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt1);
     char* byteCtxt2 = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt2);
 
