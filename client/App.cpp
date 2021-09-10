@@ -178,7 +178,7 @@ int main(){
             (const unsigned char *)n, (const unsigned char *)&e, &pub_key);
     client_err_print(status);
 
-//
+/*
     //公開鍵、秘密鍵の受信
     unsigned char pub_key[8];
     unsigned char priv_key[8];
@@ -205,7 +205,7 @@ int main(){
         }
         count += bytes;
     }while(count < 8);
-
+*/
 
     //opnessl shaのコンテキスト初期化
 

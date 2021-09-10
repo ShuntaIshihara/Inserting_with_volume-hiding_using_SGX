@@ -6,6 +6,7 @@
 #include <fstream>
 #include <assert.h>
 #include <stdlib.h>
+#include <vector>
 #include <unordered_map>
 #include <sys/socket.h> //アドレスドメイン
 #include <sys/types.h> //ソケットタイプ
@@ -17,6 +18,12 @@
 #include <openssl/evp.h>
 #include <gmp.h>
 #include "paillier.h"
+#include <cereal/cereal.hpp>
+//#include <cereal/archives/json.hpp>
+#include <cereal/archives/portable_binary.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/memory.hpp>
+
 
 
 sgx_enclave_id_t global_eid = 0;
@@ -25,7 +32,7 @@ int size = 10;
 
 struct keyvalue stash[2];
 
-struct homomorphism {
+struct cnt_data {
     std::string h;
     char* byteEncryptedOne;
 
@@ -385,39 +392,39 @@ int main()
         paillier_ciphertext_t* encryptedOne = paillier_ciphertext_from_bytes((void*)byteEncryptedOne, 
         PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
-for (int i = 0; i < s_list.size(); ++i) {
-        if (!cindex.contains(c_list[i].h) {
-            index++;
-            cindex[c_list.h] = index;
-            paillier_plaintext_t* encryptedCnt = paillier_plaintext_from_ui(0);
-        } else {
-            paillier_ciphertext_t* encryptedCnt = paiilier_ciphertext_from_bytes((void*)ctable[cindex[c_list.h]],
-                    PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-        }
-        
-        paillier_ciphertext_t* encryptedSum = paillier_create_enc_zero();
+        for (int i = 0; i < s_list.size(); ++i) {
+            if (!cindex.contains(c_list[i].h) {
+                    index++;
+                    cindex[c_list.h] = index;
+                    paillier_plaintext_t* encryptedCnt = paillier_plaintext_from_ui(0);
+                    } else {
+                    paillier_ciphertext_t* encryptedCnt = paiilier_ciphertext_from_bytes((void*)ctable[cindex[c_list.h]],
+                            PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+                    }
 
-        paillier_mul(pubKey, encryptedSum, encryptedCnt, encryptedOne);
+                    paillier_ciphertext_t* encryptedSum = paillier_create_enc_zero();
 
-        char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, 
-        encryptedSum);
+                    paillier_mul(pubKey, encryptedSum, encryptedCnt, encryptedOne);
 
-        std::memmove(ctable[cindex[c_list.h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+                    char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, 
+                        encryptedSum);
 
-
-        // Decrypt the ciphertext (sum)
-        paillier_plaintext_t* dec;
-        dec = paillier_dec(NULL, pubKey, secKey, ctable[0][c_list.h1]);
-        gmp_printf("Decrypted ctable[0][c_list.h1]: %Zd\n", dec);
+                    std::memmove(ctable[cindex[c_list.h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
 
-        paillier_freeciphertext(encryptedOne);
-        paillier_freeciphertext(encryptedCnt);
-        paillier_freeciphertext(encryptedSum);
-        paillier_freeplaintext(dec);
-        free(c_list[i].byteEncryptedOne);
-        free(byteEncryptedSum);
-}        
+                    // Decrypt the ciphertext (sum)
+                    paillier_plaintext_t* dec;
+                    dec = paillier_dec(NULL, pubKey, secKey, ctable[0][c_list.h1]);
+                    gmp_printf("Decrypted ctable[0][c_list.h1]: %Zd\n", dec);
+
+
+                    paillier_freeciphertext(encryptedOne);
+                    paillier_freeciphertext(encryptedCnt);
+                    paillier_freeciphertext(encryptedSum);
+                    paillier_freeplaintext(dec);
+                    free(c_list[i].byteEncryptedOne);
+                    free(byteEncryptedSum);
+        }        
 
 
         //cuckoo hahsing の更新
