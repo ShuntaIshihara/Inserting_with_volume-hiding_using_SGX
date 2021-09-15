@@ -23,6 +23,7 @@ std::string getPubKey(std::string filename);
 std::string getSecKey(std::string filename);
 std::vector<int> randomized_response(double p, int key, int key_max);
 std::vector<int> select_0(double p, int key_max);
+std::string sha256(SHA256_CTX sha_ctx, std::string m);
 
 
 int main(){
@@ -89,21 +90,9 @@ int main(){
         char* byteEncryptedOne = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt1);
 
         for (int i = 0; i < (int)keys.size(); ++i) {
-            //sha256ハッシュ値生成
-            unsigned char digest[SHA256_DIGEST_LENGTH];
-
-            std::cout << "key_list: " << key_list[keys[i]].c_str() << std::endl;
-            SHA256_Update(&sha_ctx, key_list[keys[i]].c_str(), key_list[keys[i]].length());
-            SHA256_Final(digest, &sha_ctx);
-
-            // ハッシュ値を文字列に変換
-            std::string h = "";
-            for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
-                std::stringstream ss;
-                ss << std::hex << (int)digest[j];
-                h.append(ss.str());
-            }
-            // 確認
+           //sha256ハッシュ値生成
+           std::string h = sha256(sha_ctx, key_list[keys[i]]);
+           // 確認
             std::cout << "ハッシュ値: ";
             std::cout << h << std::endl;
 
@@ -131,19 +120,7 @@ int main(){
 
         for (int i = 0; i < (int)keys0.size(); ++i) {
             //sha256ハッシュ値生成
-            unsigned char digest[SHA256_DIGEST_LENGTH];
-
-            std::cout << "key_list: " << key_list[keys[i]].c_str() << std::endl;
-            SHA256_Update(&sha_ctx, key_list[keys0[i]].c_str(), key_list[keys0[i]].length());
-            SHA256_Final(digest, &sha_ctx);
-
-            // ハッシュ値を文字列に変換
-            std::string h = "";
-            for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
-                std::stringstream ss;
-                ss << std::hex << (int)digest[j];
-                h.append(ss.str());
-            }
+            std::string h = sha256(sha_ctx, key_list[keys0[i]]);
             // 確認
             std::cout << "ハッシュ値: ";
             std::cout << h << std::endl;
