@@ -1,10 +1,10 @@
 COMPILER = $(CXX)
-CPPFLAGS = -Wall -std=c++11
-LIBS = -lgmp 
+CPPFLAGS = -Wall -std=c++11 -g
+LIBS = -lgmp -lcrypto 
 INCLUDE = -I/home/kdeprivacy/cereal-1.3.0/include
 OBJS = paillier.o
-SERVEROBJS = server_getKey.o deserialize.o updateCntTable.o
-CLIENTOBJS = rr.o select0.o sha256ToString.cpp
+SERVEROBJS = getKey.o deserialize.o
+CLIENTOBJS = getKey.o rr.o select0.o
 
 .PHONY: all
 
@@ -19,9 +19,6 @@ server_getKey.o: server_getKey.cpp
 deserialize.o: deserialize.cpp
 	$(COMPILER) $(CPPFLAGS) $< -c $(INCLUDE)
 
-updateCntTable.o: updateCntTable.cpp
-	$(COMPILER) $(CPPFLAGS) $< -c $(INCLUDE)
-
 
 client: client.cpp $(CLIENTOBJS) $(OBJS)
 	$(COMPILER) $(CPPFLAGS) $(CLIENTOBJS) $(OBJS) $< -o $@ $(LIBS) $(INCLUDE)
@@ -32,8 +29,6 @@ rr.o: rr.cpp
 select0.o: select0.cpp
 	$(COMPILER) $(CPPFLAGS) $< -c
 
-sha256ToString.o: sha256ToString.cpp
-	$(COMPILER) $(CPPFLAGS) $< -c
 
 paillier.o: paillier.c paillier.h
 	$(COMPILER) $(CPPFLAGS) $< -c

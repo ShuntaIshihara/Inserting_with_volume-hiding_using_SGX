@@ -11,17 +11,19 @@
 #include <unordered_map>
 #include <openssl/sha.h>
 #include <cereal/cereal.hpp>
+#include <cereal/types/memory.hpp>
 #include <cereal/types/vector.hpp>
-#include <cereal/archives/binary.hpp>
+#include <cereal/archives/portable_binary.hpp>
 #include <gmp.h>
 #include "paillier.h"
 #include "structure.hpp"
 
 
+std::string getPubKey(std::string filename);
+std::string getSecKey(std::string filename);
 std::vector<int> randomized_response(double p, int key, int key_max);
 std::vector<int> select_0(double p, int key_max);
 
-std::string sha256ToString(unsigned char digest[SHA256_DIGEST_LENGTH]);
 
 int main(){
 
@@ -49,6 +51,13 @@ int main(){
 	SHA256_CTX sha_ctx;
 	SHA256_Init(&sha_ctx); // コンテキストを初期化
 
+    //pubkey, seckey読み込み
+    std::string hexPubKey = getPubKey("pubkey.txt");
+    std::string hexSecKey = getSecKey("seckey.txt");
+
+    paillier_pubkey_t* pubKey = paillier_pubkey_from_hex(&hexPubKey[0]);
+    paillier_prvkey_t* secKey = paillier_prvkey_from_hex(&hexSecKey[0], pubKey);
+
     //キー -> キー番号　リストの宣言と初期化
     std::unordered_map<std::string, int> n_list;
 
@@ -61,7 +70,7 @@ int main(){
     while(std::cin >> line) {
         
         //新しいキーであれば、キーリストに追加
-        if (!key_list.contains(line)) {
+        if (n_list.find(line) == n_list.end()) {
             n_list[line] = cnt;
             key_list.push_back(line);
             cnt++;
@@ -83,17 +92,27 @@ int main(){
             //sha256ハッシュ値生成
             unsigned char digest[SHA256_DIGEST_LENGTH];
 
-            SHA256_Update(&sha_ctx, key_list[keys[i]], key_list[keys[i]].length());
+            std::cout << "key_list: " << key_list[keys[i]].c_str() << std::endl;
+            SHA256_Update(&sha_ctx, key_list[keys[i]].c_str(), key_list[keys[i]].length());
             SHA256_Final(digest, &sha_ctx);
 
             // ハッシュ値を文字列に変換
-            std::string h = sha256ToString(digest);
+            std::string h = "";
+            for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
+                std::stringstream ss;
+                ss << std::hex << (int)digest[j];
+                h.append(ss.str());
+            }
+            // 確認
+            std::cout << "ハッシュ値: ";
+            std::cout << h << std::endl;
+
 
             cnt_data w;
             w.h = h;
             std::memcpy(w.byteEncryptedValue, byteEncryptedOne, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
-            cnt_list.back_push(w);
+            cnt_list.push_back(w);
         }
 
         paillier_freeplaintext(m1);
@@ -114,17 +133,26 @@ int main(){
             //sha256ハッシュ値生成
             unsigned char digest[SHA256_DIGEST_LENGTH];
 
-            SHA256_Update(&sha_ctx, key_list[keys0[i]], key_list[keys0[i]].length());
+            std::cout << "key_list: " << key_list[keys[i]].c_str() << std::endl;
+            SHA256_Update(&sha_ctx, key_list[keys0[i]].c_str(), key_list[keys0[i]].length());
             SHA256_Final(digest, &sha_ctx);
 
             // ハッシュ値を文字列に変換
-            std::string h = sha256ToString(digest);
+            std::string h = "";
+            for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
+                std::stringstream ss;
+                ss << std::hex << (int)digest[j];
+                h.append(ss.str());
+            }
+            // 確認
+            std::cout << "ハッシュ値: ";
+            std::cout << h << std::endl;
 
             cnt_data w;
             w.h = h;
             std::memcpy(w.byteEncryptedValue, byteEncryptedZero, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
-            cnt_list.back_push(w);
+            cnt_list.push_back(w);
         }
 
         paillier_freeplaintext(m0);
