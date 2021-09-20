@@ -74,10 +74,13 @@ int main()
     std::unordered_map<std::string, int> indices;    //hash_mapから配列の添字を読み込む
     char* cnt_table[10];                               //hash_mapから読み込んだ添字の場所に格納する
     for (int i = 0; i < 10; i++) {
-        cnt_table[i] = (char*)malloc(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-    }
+        paillier_plaintext_t* m = paillier_plaintext_from_ui(0);
+        paillier_ciphertext_t* ctxt;
+        ctxt = paillier_enc(NULL, pubKey, m, paillier_get_rand_devurandom);
+        cnt_table[i] =  (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt);
+        }
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 10; ++i) {
         //count tabel の更新情報を受信
         int bytes;
         int count = 0;
@@ -102,7 +105,10 @@ int main()
                 return 1;
             }
             count += bytes;
-        }while(count < size+1);
+        }while(count < size);
+
+        std::cout << "buffer: ";
+        std::cout << std::hex << buffer << std::endl;
 
         //デシリアライズ
         std::vector<cnt_data> cnt_list = deserialize(buffer, size);
@@ -111,39 +117,56 @@ int main()
         }
 
 
-        for (int i = 0; i < cnt_list.size(); ++i) {
-            paillier_ciphertext_t* encryptedCnt;
-            if(indices.find(cnt_list[i].h) == indices.end()) {
+        for (int j = 0; j < cnt_list.size(); ++j) {
+            if(indices.find(cnt_list[j].h) == indices.end()) {
                 index++;
-                indices[cnt_list[i].h] = index;
-                encryptedCnt = paillier_create_enc_zero();
-            } else {
-                encryptedCnt = paillier_ciphertext_from_bytes((void*)cnt_table[i], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+                indices[cnt_list[j].h] = index;
             }
+            paillier_ciphertext_t* encryptedCnt = paillier_ciphertext_from_bytes((void*)cnt_table[j], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            paillier_plaintext_t* dec3;
+            dec3 = paillier_dec(NULL, pubKey, secKey, encryptedCnt);
+            std::cout << "元々のテーブルの値" << std::endl;
+            gmp_printf("Decrypted value: %Zd\n", dec3);
+
+
 
             paillier_ciphertext_t* encryptedSum = paillier_create_enc_zero();
 
-            paillier_ciphertext_t* encryptedValue = paillier_ciphertext_from_bytes((void*)cnt_list[i].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            paillier_ciphertext_t* encryptedValue = paillier_ciphertext_from_bytes((void*)cnt_list[j].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
+            paillier_plaintext_t* dec1;
+            dec1 = paillier_dec(NULL, pubKey, secKey, encryptedValue);
+            std::cout << "This value is sent by client." << std::endl;
+            gmp_printf("Decrypted value: %Zd\n", dec1);
+
+ 
             paillier_mul(pubKey, encryptedSum, encryptedCnt, encryptedValue);
+            paillier_plaintext_t* dec2;
+            dec2 = paillier_dec(NULL, pubKey, secKey, encryptedSum);
+            std::cout << "This value is the sum." << std::endl;
+            gmp_printf("Decrypted value: %Zd\n", dec2);
+
+
 
             char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, encryptedSum);
 
 
-            std::memmove(cnt_table[indices[cnt_list[i].h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            std::memmove(cnt_table[indices[cnt_list[j].h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
 
             // Decrypt the ciphertext (sum)
-            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[i].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
             paillier_plaintext_t* dec;
             dec = paillier_dec(NULL, pubKey, secKey, ctxt);
-            gmp_printf("Decrypted ctable[0][c_list.h1]: %Zd\n", dec);
+            std::cout << "cnt_table[" << indices[cnt_list[j].h] << "] = ";
+            gmp_printf("Decrypted value: %Zd\n", dec);
 
             paillier_freeciphertext(encryptedValue);
             paillier_freeciphertext(encryptedCnt);
             paillier_freeciphertext(encryptedSum);
             paillier_freeplaintext(dec);
+            paillier_freeplaintext(dec1);
             free(byteEncryptedSum);
         }
 

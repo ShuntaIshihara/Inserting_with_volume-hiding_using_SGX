@@ -143,7 +143,7 @@ int main(){
             cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
             o_archive(cnt_list);
         }
-        std::cout << ss.str() << std::endl;
+//        std::cout << ss.str() << std::endl;
 
         char buffer[ss.str().size()];
         std::memcpy(buffer, ss.str().data(), ss.str().size());

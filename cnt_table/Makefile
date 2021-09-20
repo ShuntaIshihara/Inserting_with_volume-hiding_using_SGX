@@ -4,7 +4,7 @@ LIBS = -lgmp -lcrypto
 INCLUDE = -I/home/kdeprivacy/cereal-1.3.0/include
 OBJS = paillier.o
 SERVEROBJS = getKey.o deserialize.o
-CLIENTOBJS = getKey.o rr.o select0.o sha256.cpp
+CLIENTOBJS = getKey.o rr.o select0.o sha256.o
 
 .PHONY: all
 
