@@ -14,13 +14,13 @@
 #include <unistd.h> //close()に利用
 
 struct Pokemon {
-    std::string name;
+    char name[256];
     int hp = 0;
 
     template<class Archive>
     void serialize(Archive & archive)
     {
-        archive(CEREAL_NVP(name), CEREAL_NVP(hp));
+        archive(name, hp);
     }
 };
 

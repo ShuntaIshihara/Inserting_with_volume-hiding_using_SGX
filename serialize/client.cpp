@@ -16,7 +16,7 @@
 #include <unistd.h> //close()に利用
 
 struct Pokemon {
-    std::string name;
+    char name[256];
     int hp = 0;
 
     template<class Archive>
@@ -30,19 +30,19 @@ int main()
 {
     std::vector<struct Pokemon> pokemon;
     Pokemon pikachu;
-    pikachu.name = "PIKACHU";
+    std::strcpy(pikachu.name, "PIKACHU");
     pikachu.hp = 100;
 
     Pokemon hitokage;
-    hitokage.name = "HITOKAGE";
+    std::strcpy(hitokage.name, "HITOKAGE");
     hitokage.hp = 100;
 
     Pokemon zenigame;
-    zenigame.name = "ZENIGAME";
+    std::strcpy(zenigame.name, "ZENIGAME");
     zenigame.hp = 100;
 
     Pokemon fushigidane;
-    fushigidane.name = "FUSHIGIDANE";
+    std::strcpy(fushigidane.name, "FUSHIGIDANE");
     fushigidane.hp = 100;
 
     pokemon.push_back(pikachu);
