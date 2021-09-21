@@ -2,8 +2,8 @@ COMPILER = $(CXX)
 CPPFLAGS = -Wall -std=c++11 -g
 LIBS = -lgmp -lcrypto 
 INCLUDE = -I/home/kdeprivacy/cereal-1.3.0/include
-OBJS = paillier.o
-SERVEROBJS = getKey.o deserialize.o
+OBJS = paillier.o deserialize.o
+SERVEROBJS = getKey.o
 CLIENTOBJS = getKey.o rr.o select0.o sha256.o
 
 .PHONY: all

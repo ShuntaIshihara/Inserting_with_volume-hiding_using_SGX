@@ -8,11 +8,10 @@
 #include <gmp.h>
 #include "paillier.h"
 #include <cereal/cereal.hpp>
-//#include <cereal/archives/json.hpp>
 #include <cereal/archives/portable_binary.hpp>
+#include <cereal/types/memory.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/array.hpp>
-#include <cereal/types/memory.hpp>
 #include "structure.hpp"
 
 
@@ -78,7 +77,7 @@ int main()
         paillier_ciphertext_t* ctxt;
         ctxt = paillier_enc(NULL, pubKey, m, paillier_get_rand_devurandom);
         cnt_table[i] =  (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt);
-        }
+    }
 
     for (int i = 0; i < 10; ++i) {
         //count tabel の更新情報を受信
@@ -94,7 +93,6 @@ int main()
             count += bytes;
         }while(count < (int)sizeof(int));
 
-        std::cout << size << std::endl;
 
         char buffer[size];
         count = 0;
@@ -107,14 +105,11 @@ int main()
             count += bytes;
         }while(count < size);
 
-        std::cout << "buffer: ";
-        std::cout << std::hex << buffer << std::endl;
 
         //デシリアライズ
         std::vector<cnt_data> cnt_list = deserialize(buffer, size);
-        for (int i = 0; i < (int)cnt_list.size(); ++i) {
-            std::cout << cnt_list[i].h << std::endl;
-        }
+
+        std::vector<cnt_data> send_list;
 
 
         for (int j = 0; j < cnt_list.size(); ++j) {
@@ -150,6 +145,13 @@ int main()
 
             char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, encryptedSum);
 
+            cnt_data w;
+
+            w.h = cnt_list[j].h;
+            std::memcpy(w.byteEncryptedValue, byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+            send_list.push_back(w);
+
 
             std::memmove(cnt_table[indices[cnt_list[j].h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
@@ -169,6 +171,20 @@ int main()
             paillier_freeplaintext(dec1);
             free(byteEncryptedSum);
         }
+
+        std::stringstream ss;
+        {
+            cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
+            o_archive(send_list);
+        }
+        char bf[ss.str().size()];
+        std::memcpy(bf, ss.str().data(), ss.str().size());
+
+        int s = ss.str().size();
+        send(connect, &s, sizeof(int), 0);
+        send(connect, bf, s, 0);
+
+        std::cout << "we are here." << std::endl;
 
     }
     paillier_freepubkey(pubKey);

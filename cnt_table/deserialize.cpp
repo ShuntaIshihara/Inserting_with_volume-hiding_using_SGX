@@ -5,8 +5,8 @@
 #include <cereal/archives/portable_binary.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/memory.hpp>
-#include <gmp.h>
-#include "paillier.h"
+//#include <gmp.h>
+//#include "paillier.h"
 #include "structure.hpp"
 
 
