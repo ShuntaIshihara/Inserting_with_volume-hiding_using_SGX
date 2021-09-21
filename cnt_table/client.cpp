@@ -24,7 +24,7 @@ std::string getSecKey(std::string filename);
 std::vector<int> randomized_response(double p, int key, int key_max);
 std::vector<int> select_0(double p, int key_max);
 std::string sha256(SHA256_CTX sha_ctx, std::string m);
-
+std::vector<cnt_data> deserialize(char buffer[], int size);
 
 int main(){
 
@@ -77,6 +77,12 @@ int main(){
             cnt++;
         }
 
+        //hash値 -> キー　リストの宣言と初期化
+        std::unordered_map<std::string, std::string> hash_list;
+
+        //key
+        std::string key = line;
+
         //randomized response
         std::vector<int> keys = randomized_response(0.5, n_list[line], n_list.size());
 
@@ -90,12 +96,13 @@ int main(){
         char* byteEncryptedOne = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt1);
 
         for (int i = 0; i < (int)keys.size(); ++i) {
-           //sha256ハッシュ値生成
-           std::string h = sha256(sha_ctx, key_list[keys[i]]);
-           // 確認
+            //sha256ハッシュ値生成
+            std::string h = sha256(sha_ctx, key_list[keys[i]]);
+            // 確認
             std::cout << "ハッシュ値: ";
             std::cout << h << std::endl;
 
+            hash_list[h] = key_list[keys[i]];
 
             cnt_data w;
             w.h = h;
@@ -124,6 +131,8 @@ int main(){
             // 確認
             std::cout << "ハッシュ値: ";
             std::cout << h << std::endl;
+
+            hash_list[h] = key_list[keys0[i]];
 
             cnt_data w;
             w.h = h;
@@ -155,6 +164,46 @@ int main(){
         send(sockfd, buffer, size, 0);
 
         cnt_list.clear();
+
+        //結果を受け取る
+        int count = 0;
+        int bytes;
+        int s;
+        do {
+            bytes = recv(sockfd, &s + count, sizeof(int) - count, 0);
+            if (bytes < 0) {
+                std::cerr << "recv s error\n";
+                return 1;
+            }
+            count += bytes;
+        }while(count < (int)sizeof(int));
+
+        count = 0;
+        char bf[s];
+        do {
+            bytes = recv(sockfd, bf + count, s - count, 0);
+            if (bytes < 0) {
+                std::cerr << "recv bf error" << std::endl;
+                return 1;
+            }
+            count += bytes;
+        }while(count < s);
+
+        //デシリアライズ
+        std::vector<cnt_data> recv_list = deserialize(buffer, s);
+
+        for (int i = 0; i < (int)recv_list.size(); ++i) {
+            if (key != hash_list[recv_list[i].h]) {
+                std::cout << "continue" << std::endl;
+                continue;
+            }
+
+            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)recv_list[i].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            paillier_plaintext_t* dec;
+            dec = paillier_dec(NULL, pubKey, secKey, ctxt);
+            gmp_printf("Volume: %Zd\n", dec);
+        }
+
 
     }
 
