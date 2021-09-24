@@ -13,27 +13,27 @@ all: server client
 server: server.cpp $(SERVEROBJS) $(OBJS)
 	$(COMPILER) $(CPPFLAGS) $(SERVEROBJS) $(OBJS) $< -o $@ $(LIBS) $(INCLUDE)
 
-server_getKey.o: server_getKey.cpp
-	$(COMPILER) $(CPPFLAGS) $< -c
+getKey.o: getKey.cpp
+	$(COMPILER) $(CPPFLAGS) -c $< -o $@
 
 deserialize.o: deserialize.cpp
-	$(COMPILER) $(CPPFLAGS) $< -c $(INCLUDE)
+	$(COMPILER) $(CPPFLAGS) -c $< $(INCLUDE) -o $@
 
 
 client: client.cpp $(CLIENTOBJS) $(OBJS)
 	$(COMPILER) $(CPPFLAGS) $(CLIENTOBJS) $(OBJS) $< -o $@ $(LIBS) $(INCLUDE)
 
 rr.o: rr.cpp
-	$(COMPILER) $(CPPFLAGS) $< -c
+	$(COMPILER) $(CPPFLAGS) -c $< -o $@
 
 select0.o: select0.cpp
-	$(COMPILER) $(CPPFLAGS) $< -c
+	$(COMPILER) $(CPPFLAGS) -c $< -o $@
 
 sha256.o: sha256.cpp
-	$(COMPILER) $(CPPFLAGS) $< -c -lcrypto
+	$(COMPILER) $(CPPFLAGS) -c -lcrypto $< -o $@
 
 paillier.o: paillier.c paillier.h
-	$(COMPILER) $(CPPFLAGS) $< -c
+	$(COMPILER) $(CPPFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:

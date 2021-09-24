@@ -117,7 +117,7 @@ int main()
                 index++;
                 indices[cnt_list[j].h] = index;
             }
-            paillier_ciphertext_t* encryptedCnt = paillier_ciphertext_from_bytes((void*)cnt_table[j], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            paillier_ciphertext_t* encryptedCnt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
             paillier_plaintext_t* dec3;
             dec3 = paillier_dec(NULL, pubKey, secKey, encryptedCnt);
             std::cout << "元々のテーブルの値" << std::endl;
@@ -152,24 +152,32 @@ int main()
 
             send_list.push_back(w);
 
+            paillier_ciphertext_t* ctxt4 = paillier_ciphertext_from_bytes((void*)send_list[j].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            paillier_plaintext_t* dec4;
+            dec4 = paillier_dec(NULL, pubKey, secKey, ctxt4);
+            gmp_printf("w.byteEncryptedValue: %Zd\n", dec4);
 
-            std::memmove(cnt_table[indices[cnt_list[j].h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+
+            std::memcpy(cnt_table[indices[cnt_list[j].h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
 
             // Decrypt the ciphertext (sum)
             paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
+            paillier_freeciphertext(encryptedValue);
+            paillier_freeciphertext(encryptedCnt);
+            paillier_freeciphertext(encryptedSum);
+            paillier_freeplaintext(dec1);
+            free(byteEncryptedSum);
+
             paillier_plaintext_t* dec;
             dec = paillier_dec(NULL, pubKey, secKey, ctxt);
             std::cout << "cnt_table[" << indices[cnt_list[j].h] << "] = ";
             gmp_printf("Decrypted value: %Zd\n", dec);
-
-            paillier_freeciphertext(encryptedValue);
-            paillier_freeciphertext(encryptedCnt);
-            paillier_freeciphertext(encryptedSum);
             paillier_freeplaintext(dec);
-            paillier_freeplaintext(dec1);
-            free(byteEncryptedSum);
+
+
         }
 
         std::stringstream ss;

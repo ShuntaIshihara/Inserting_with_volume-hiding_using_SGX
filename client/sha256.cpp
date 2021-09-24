@@ -1,23 +1,27 @@
-#include <stdio.h>
+#include <string>
 #include <cstring>
+#include <sstream>
 #include <openssl/sha.h>
 
-int main(int argc, char *argv[])
+std::string sha256(SHA256_CTX sha_ctx, std::string m)
 {
-	char *message = "Sample Message";
-	unsigned char digest[SHA256_DIGEST_LENGTH];
-	
-	SHA256_CTX sha_ctx;
-	SHA256_Init(&sha_ctx); // コンテキストを初期化
-	SHA256_Update(&sha_ctx, message, sizeof(message)); // message を入力にする
-	SHA256_Final(digest, &sha_ctx); // digest に出力
+    SHA256_Init(&sha_ctx); // コンテキストを初期化
 
-	printf("%s\n", message);
-	
-		printf("%d", digest[0]);
-	printf("\n");
+    //sha256ハッシュ値生成
+    unsigned char digest[SHA256_DIGEST_LENGTH];
 
-    printf("SHA256_DIGEST_LENGTH = %d\n", SHA256_DIGEST_LENGTH);
 
-    return 0;
+    SHA256_Update(&sha_ctx, m.c_str(), m.length());
+    SHA256_Final(digest, &sha_ctx);
+    
+
+    // ハッシュ値(16進数)を文字列に変換
+    std::string h = "";
+    for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
+        std::stringstream ss;
+        ss << std::hex << (int)digest[j];
+        h.append(ss.str());
+    }
+
+    return h;
 }

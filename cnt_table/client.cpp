@@ -190,7 +190,7 @@ int main(){
         }while(count < s);
 
         //デシリアライズ
-        std::vector<cnt_data> recv_list = deserialize(buffer, s);
+        std::vector<cnt_data> recv_list = deserialize(bf, s);
 
         for (int i = 0; i < (int)recv_list.size(); ++i) {
             if (key != hash_list[recv_list[i].h]) {

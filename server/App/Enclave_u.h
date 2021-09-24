@@ -49,6 +49,7 @@ sgx_status_t ecall_generate_keys(sgx_enclave_id_t eid, unsigned char n[256], uns
 sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, unsigned char t_data[256], unsigned char* data);
 sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, unsigned char dec[256], unsigned char enc[256]);
 sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue table[2][10], struct keyvalue* data, int* size);
+sgx_status_t ecall_hash_block(sgx_enclave_id_t eid, int* retval, unsigned char key[256], int* size);
 
 #ifdef __cplusplus
 }

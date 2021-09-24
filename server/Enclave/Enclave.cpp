@@ -4,6 +4,8 @@
 #include <string.h>
 #include <sgx_tcrypto.h>
 
+#define TABLE_SIZE 10
+
 //公開鍵、秘密鍵の生成
 int n_byte_size = 256;
 //unsigned char n[256];
@@ -203,6 +205,11 @@ int hash_2(unsigned char* key, int size)
     return abs(*h) % size;
 }
 
+int ecall_hash_block(unsigned char key[256], int *size)
+{
+    return hash_1(decrypt(key), *size);
+}
+
 int is_dummy(unsigned char *k)
 {
     int check = strncmp((const char *)k, "dummy_", 6);
@@ -210,7 +217,7 @@ int is_dummy(unsigned char *k)
     return 0;
 }
 
-struct keyvalue cuckoo(struct keyvalue table[2][10], struct keyvalue data, int size, int tableID, int cnt, int limit)
+struct keyvalue cuckoo(struct keyvalue table[2][TABLE_SIZE], struct keyvalue data, int size, int tableID, int cnt, int limit)
 {
     if (cnt >= limit) return data;
 
@@ -230,7 +237,7 @@ struct keyvalue cuckoo(struct keyvalue table[2][10], struct keyvalue data, int s
     return cuckoo(table, w, size, (tableID+1)%2, cnt+1, limit);
 }
 
-void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue *data, int *size)
+void ecall_insertion_start(struct keyvalue table[2][TABLE_SIZE], struct keyvalue *data, int *size)
 {
 	struct keyvalue stash[2];
 
@@ -249,6 +256,7 @@ void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue *data, 
     wchar_t wc[32];
     swprintf(wc, sizeof(wc)/sizeof(wchar_t), L"%d", rand);
     strncat((char *)v, (const char *)wc, 26);
+    v[31] = '\0';
     encrypt(dummy.key, v);
     for (int i = 0; i < 10; i++) {
         v[6] = '\0';
@@ -260,6 +268,7 @@ void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue *data, 
         swprintf(wc, sizeof(wc)/sizeof(wchar_t), L"%d", rand);
         strncat((char *)v, (const char *)wc, 26);
         encrypt(dummy.value[i], v);
+        v[31] = '\0';
     }
     //ダミーデータを挿入し、托卵操作を行う
     stash[1] = cuckoo(table, dummy, *size, 0, 0, 5);
