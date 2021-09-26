@@ -145,7 +145,7 @@ sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, unsigned char dec[256], unsigne
 	return status;
 }
 
-sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue table[2][10], struct keyvalue* data, int* size)
+sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue table[2][10000], struct keyvalue* data, int* size)
 {
 	sgx_status_t status;
 	ms_ecall_insertion_start_t ms;

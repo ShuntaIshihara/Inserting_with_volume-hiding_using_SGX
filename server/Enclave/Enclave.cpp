@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sgx_tcrypto.h>
 
-#define TABLE_SIZE 10
+#define TABLE_SIZE 10000
 
 //公開鍵、秘密鍵の生成
 int n_byte_size = 256;
