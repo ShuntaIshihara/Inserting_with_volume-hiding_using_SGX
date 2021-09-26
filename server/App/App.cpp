@@ -17,7 +17,6 @@
 #include "error_print.h"
 #include <openssl/evp.h>
 #include <gmp.h>
-#include "paillier.h"
 #include <cereal/cereal.hpp>
 #include <cereal/archives/portable_binary.hpp>
 #include <cereal/types/memory.hpp>
@@ -27,6 +26,8 @@
 
 #define BLOCK_SIZE 10
 #define TABLE_SIZE 10
+
+#include "paillier.h"
 
 sgx_enclave_id_t global_eid = 0;
 
@@ -232,38 +233,6 @@ void acpy(unsigned char cpy[], char data[])
 int main()
 {
     std::cout << "check point2" << std::endl;
-    /* initialize enclave */
-	if(initialize_enclave() < 0)
-	{
-		std::cerr << "App: fatal error: Failed to initialize enclave.";
-		std::cerr << std::endl;
-		return -1;
-	}
-
-    //sgxrsa暗号化キーの生成
-    unsigned char n[256];    
-    unsigned char d[256];
-    unsigned char p[256];
-    unsigned char q[256];
-    unsigned char dmp1[256];
-    unsigned char dmq1[256];
-    unsigned char iqmp[256];
-    long e = 65537;
-
-    sgx_status_t status = ecall_generate_keys(global_eid,
-            n, d, p, q, dmp1, dmq1, iqmp, &e);
-
-    if(status != SGX_SUCCESS)
-    {
-        sgx_error_print(status);
-
-        return -1;
-    }
-
-    //Tableの初期化
-    struct keyvalue table[BLOCK_SIZE][2][TABLE_SIZE];
-    table_init(table);
-
 
     //ソケットの生成
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0); //アドレスドメイン, ソケットタイプ, プロトコル
@@ -305,6 +274,40 @@ int main()
 		exit(1); //異常終了
 	}
 
+
+    /* initialize enclave */
+	if(initialize_enclave() < 0)
+	{
+		std::cerr << "App: fatal error: Failed to initialize enclave.";
+		std::cerr << std::endl;
+		return -1;
+	}
+
+    //sgxrsa暗号化キーの生成
+    unsigned char n[256];    
+    unsigned char d[256];
+    unsigned char p[256];
+    unsigned char q[256];
+    unsigned char dmp1[256];
+    unsigned char dmq1[256];
+    unsigned char iqmp[256];
+    long e = 65537;
+
+    sgx_status_t status = ecall_generate_keys(global_eid,
+            n, d, p, q, dmp1, dmq1, iqmp, &e);
+
+    if(status != SGX_SUCCESS)
+    {
+        sgx_error_print(status);
+
+        return -1;
+    }
+
+    //Tableの初期化
+    struct keyvalue table[BLOCK_SIZE][2][TABLE_SIZE];
+    table_init(table);
+
+
     //鍵の成分を送信
     send(connect, n, 256, 0);
     send(connect, d, 256, 0);
@@ -317,11 +320,13 @@ int main()
 
     std::cout << "check point 1" << std::endl;
 
-    std::string hexPubKey = getPubKey("pubkey.txt");
-    std::string hexSecKey = getSecKey("seckey.txt");
+    std::string hexPubKey = getPubKey("App/pubkey.txt");
+    std::string hexSecKey = getSecKey("App/seckey.txt");
 
     paillier_pubkey_t* pubKey = paillier_pubkey_from_hex(&hexPubKey[0]);
     paillier_prvkey_t* secKey = paillier_prvkey_from_hex(&hexSecKey[0], pubKey);
+
+    std::cout << "check point 5" << std::endl;
 
     int index = 0;
     std::unordered_map<std::string, int> indices;    //hash_mapから配列の添字を読み込む
