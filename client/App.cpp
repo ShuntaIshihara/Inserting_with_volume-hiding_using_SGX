@@ -15,8 +15,13 @@
 #include <openssl/err.h>
 #include <openssl/sha.h>
 #include <cereal/cereal.hpp>
+#include <cereal/types/memory.hpp>
 #include <cereal/types/vector.hpp>
-#include <cereal/archives/binary.hpp>
+#include <cereal/archives/portable_binary.hpp>
+#include <gmp.h>
+#include "paillier.h"
+#include "structure.hpp"
+
 
 #include "define.h"
 
@@ -28,19 +33,14 @@ int client_create_rsa_pub1_key(int mod_size, int exp_size, const unsigned char *
 int client_rsa_encrypt_sha256(const void* rsa_key, unsigned char* pout_data, size_t* pout_len, const unsigned char* pin_data, const size_t pin_len);
 int client_rsa_decrypt_sha256(const void* rsa_key, unsigned char* pout_data, size_t* pout_len, const unsigned char* pin_data, const size_t pin_len);
 
+std::string getPubKey(std::string filename);
+std::string getSecKey(std::string filename);
 std::vector<int> randomized_response(double p, int key, int key_max);
-std::vector<int> select_0(double p, int key_max)
+std::vector<int> select_0(double p, int key_max);
+std::string sha256(SHA256_CTX sha_ctx, std::string m);
+std::vector<cnt_data> deserialize(char buffer[], int size);
 
-struct homomorphism {
-    std::string h;
-    char* byteEncryptedValue;
 
-    template<class Archive>
-        void serialize(Archive & archive)
-    {
-        archive(name, hp);
-    }
-};
 
 int main(){
 
@@ -62,6 +62,26 @@ int main(){
 
 	//ソケット接続要求
 	connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)); //ソケット, アドレスポインタ, アドレスサイズ
+
+    //opnessl shaのコンテキスト初期化
+
+	SHA256_CTX sha_ctx;
+	SHA256_Init(&sha_ctx); // コンテキストを初期化
+
+    //pubkey, seckey読み込み
+    std::string hexPubKey = getPubKey("pubkey.txt");
+    std::string hexSecKey = getSecKey("seckey.txt");
+
+    paillier_pubkey_t* pubKey = paillier_pubkey_from_hex(&hexPubKey[0]);
+    paillier_prvkey_t* secKey = paillier_prvkey_from_hex(&hexSecKey[0], pubKey);
+
+    //キー -> キー番号　リストの宣言と初期化
+    std::unordered_map<std::string, int> n_list;
+
+    //キー番号 -> キー　リストの宣言と初期化
+    std::vector<std::string> key_list;
+
+    
 
 
     //鍵の成分の生成
@@ -178,50 +198,146 @@ int main(){
             (const unsigned char *)n, (const unsigned char *)&e, &pub_key);
     client_err_print(status);
 
-/*
-    //公開鍵、秘密鍵の受信
-    unsigned char pub_key[8];
-    unsigned char priv_key[8];
-
-    int count = 0;
-    int bytes;
-    do {
-        bytes = recv(sockfd, pub_key + count, 8 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
-        if (bytes < 0) {
-            std::cerr << "recv pub_key error\n";
-            return 1;
-        }
-        count += bytes;
-    }while(count < 8);
-
-    count = 0;
-    do {
-        bytes = recv(sockfd, priv_key + count, 8 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
-        if (bytes < 0) {
-            std::cerr << "recv priv_key error\n";
-            return 1;
-        }
-        count += bytes;
-    }while(count < 8);
-*/
-
-    //opnessl shaのコンテキスト初期化
-
-	SHA256_CTX sha_ctx;
-	SHA256_Init(&sha_ctx); // コンテキストを初期化
-
-    //キー -> キー番号　リストの宣言と初期化
-    std::unordered_map<std::string, int> n_list;
-
-    //キー番号 -> キー　リストの宣言と初期化
-    std::vector<std::string> key_list;
 
     //データの挿入操作
     std::string line;
     int cnt = 0;
     while(std::cin >> line) {
+        
+        //新しいキーであれば、キーリストに追加
+        if (n_list.find(line) == n_list.end()) {
+            n_list[line] = cnt;
+            key_list.push_back(line);
+            cnt++;
+        }
+
+        //hash値 -> キー　リストの宣言と初期化
+        std::unordered_map<std::string, std::string> hash_list;
+
+        //key
+        std::string key = line;
+
+        //randomized response
+        std::vector<int> keys = randomized_response(0.5, n_list[line], n_list.size());
+
+        //サーバーに送るキーのリスト
+        std::vector<cnt_data> cnt_list;
+
+        //byteEncryptedOneの生成
+        paillier_plaintext_t* m1 = paillier_plaintext_from_ui(1);
+        paillier_ciphertext_t* ctxt1;
+        ctxt1 = paillier_enc(NULL, pubKey, m1, paillier_get_rand_devurandom);
+        char* byteEncryptedOne = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt1);
+
+        for (int i = 0; i < (int)keys.size(); ++i) {
+            //sha256ハッシュ値生成
+            std::string h = sha256(sha_ctx, key_list[keys[i]]);
+            // 確認
+            std::cout << "ハッシュ値: ";
+            std::cout << h << std::endl;
+
+            hash_list[h] = key_list[keys[i]];
+
+            cnt_data w;
+            w.h = h;
+            std::memcpy(w.byteEncryptedValue, byteEncryptedOne, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+            cnt_list.push_back(w);
+        }
+
+        paillier_freeplaintext(m1);
+        paillier_freeciphertext(ctxt1);
+        free(byteEncryptedOne);
+        keys.clear();
+
+        //0を送るキーを選ぶ
+        std::vector<int> keys0 = select_0(0.5, n_list.size());
+
+        //byteEncryptedZeroを生成
+        paillier_plaintext_t* m0 = paillier_plaintext_from_ui(0);
+        paillier_ciphertext_t* ctxt0;
+        ctxt0 = paillier_enc(NULL, pubKey, m0, paillier_get_rand_devurandom);
+        char* byteEncryptedZero = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt0);
+
+        for (int i = 0; i < (int)keys0.size(); ++i) {
+            //sha256ハッシュ値生成
+            std::string h = sha256(sha_ctx, key_list[keys0[i]]);
+            // 確認
+            std::cout << "ハッシュ値: ";
+            std::cout << h << std::endl;
+
+            hash_list[h] = key_list[keys0[i]];
+
+            cnt_data w;
+            w.h = h;
+            std::memcpy(w.byteEncryptedValue, byteEncryptedZero, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+            cnt_list.push_back(w);
+        }
+
+        paillier_freeplaintext(m0);
+        paillier_freeciphertext(ctxt0);
+        free(byteEncryptedZero);
+        keys0.clear();
+
+        //シリアライズ
+        std::stringstream ss;
+        {
+            cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
+            o_archive(cnt_list);
+        }
+//        std::cout << ss.str() << std::endl;
+
+        char buffer[ss.str().size()];
+        std::memcpy(buffer, ss.str().data(), ss.str().size());
+
+        int bf_size = ss.str().size();
+        std::cout << bf_size << std::endl;
+
+        send(sockfd, &bf_size, sizeof(int), 0);
+        send(sockfd, buffer, bf_size, 0);
+
+        cnt_list.clear();
+
+        //結果を受け取る
+        int count = 0;
+        int bytes;
+        int s;
+        do {
+            bytes = recv(sockfd, &s + count, sizeof(int) - count, 0);
+            if (bytes < 0) {
+                std::cerr << "recv s error\n";
+                return 1;
+            }
+            count += bytes;
+        }while(count < (int)sizeof(int));
+
+        count = 0;
+        char bf[s];
+        do {
+            bytes = recv(sockfd, bf + count, s - count, 0);
+            if (bytes < 0) {
+                std::cerr << "recv bf error" << std::endl;
+                return 1;
+            }
+            count += bytes;
+        }while(count < s);
+
+        //デシリアライズ
+        std::vector<cnt_data> recv_list = deserialize(bf, s);
+
+        for (int i = 0; i < (int)recv_list.size(); ++i) {
+            if (key != hash_list[recv_list[i].h]) {
+                std::cout << "continue" << std::endl;
+                continue;
+            }
+
+            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)recv_list[i].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            paillier_plaintext_t* dec;
+            dec = paillier_dec(NULL, pubKey, secKey, ctxt);
+            gmp_printf("Volume: %Zd\n", dec);
+        }
+
         struct keyvalue data;
         size_t enc_len = 256;
         size_t dec_len = 0;
@@ -239,111 +355,6 @@ int main(){
         }
 
         
-        //新しいキーであれば、キーリストに追加
-        if (!key_list.contains(line)) {
-            n_list[line] = cnt;
-            key_list.push_back(line);
-            cnt++;
-        }
-
-        //randomized response
-        std::vector<int> keys = randomized_response(0.5, n_list[line], n_list.size());
-
-
-        //サーバーに送るキーのリスト
-        std::vector<struct homomorphism> s_list;
-
-        //byteEncryptedOneの生成
-        paillier_plaintext_t* m1 = paillier_plaintext_from_ui(1);
-        paillier_ciphertext_t* ctxt1;
-        ctxt1 = paillier_enc(NULL, pubKey, m1, paillier_get_rand_devurandom);
-        char* byteEncryptedOne = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt1);
-
-        for (int i = 0; i < (int)keys.size(); ++i) {
-            //sha256ハッシュ値生成
-            unsigned char digest[SHA256_DIGEST_LENGTH];
-
-            SHA256_Update(&sha_ctx, key_list[keys[i]], key_list[keys[i]].length());
-            SHA256_Final(digest, &sha_ctx);
-
-            // ハッシュ値を文字列に変換
-            std::string h = "";
-            for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
-                std::stringstream ss;
-                ss << std::hex << digest[j];
-                h.append(ss.str());
-            }
-            // 確認
-            std::cout << h << std::endl;
-
-            struct homomorphism w;
-            w.h = h;
-            w.byteEncryptedValue = byteEncryptedOne;
-
-            s_list.back_push(w);
-        }
-
-        paillier_freeplaintext(m1);
-        paillier_freeciphertext(ctxt1);
-        free(byteEncryptedOne);
-
-        //0を送るキーを選ぶ
-        std::vector<int> keys0 = select_0(0.5, n_list.size());
-
-        //byteEncryptedZeroを生成
-        paillier_plaintext_t* m0 = paillier_plaintext_from_ui(0);
-        paillier_ciphertext_t* ctxt0;
-        ctxt0 = paillier_enc(NULL, pubKey, m0, paillier_get_rand_devurandom);
-        char* byteEncryptedZero = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt0);
-
-        for (int i = 0; i < (int)keys0.size(); ++i) {
-            //sha256ハッシュ値生成
-            unsigned char digest[SHA256_DIGEST_LENGTH];
-
-            SHA256_Update(&sha_ctx, key_list[keys0[i]], key_list[keys0[i]].length());
-            SHA256_Final(digest, &sha_ctx);
-
-            // ハッシュ値を文字列に変換
-            std::string h = "";
-            for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
-                std::stringstream ss;
-                ss << std::hex << digest[j];
-                h.append(ss.str());
-            }
-            // 確認
-            std::cout << h << std::endl;
-
-            struct homomorphism w;
-            w.h = h;
-            w.byteEncryptedValue = byteEncryptedOne;
-
-            s_list.back_push(w);
-        }
-
-        paillier_freeplaintext(m0);
-        paillier_freeciphertext(ctxt0);
-        free(byteEncryptedZero);
-
-        //シリアライズ
-        std::stringstream ss;
-        {
-            cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
-            o_archive(s_list);
-        }
-        std::cout << ss.str() << std::endl;
-
-        char buffer[ss.str().size()];
-        std::memcpy(buffer, ss.str().data(), ss.str().size());
-
-        int size = ss.str().size();
-        std::cout << size << std::endl;
-
-        send(sockfd, &size, sizeof(int), 0);
-        send(sockfd, buffer, size, 0);
-
-        for (int i = 0; i < s_list.size(); ++i) {
-            free(s_list[i].byteEncryptedValue);
-        }
 
 
         for (int i = 0; i < 10; ++i) {

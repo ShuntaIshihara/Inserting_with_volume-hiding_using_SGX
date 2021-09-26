@@ -27,6 +27,7 @@ void ecall_generate_keys(unsigned char n[256], unsigned char d[256], unsigned ch
 void ecall_encrypt(unsigned char t_data[256], unsigned char* data);
 void ecall_decrypt(unsigned char dec[256], unsigned char enc[256]);
 void ecall_insertion_start(struct keyvalue table[2][10], struct keyvalue* data, int* size);
+int ecall_hash_block(unsigned char key[256], int* size);
 
 sgx_status_t SGX_CDECL ocall_err_different_size(const char* str);
 sgx_status_t SGX_CDECL ocall_err_print(sgx_status_t* st);

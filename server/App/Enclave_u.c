@@ -29,6 +29,12 @@ typedef struct ms_ecall_insertion_start_t {
 	int* ms_size;
 } ms_ecall_insertion_start_t;
 
+typedef struct ms_ecall_hash_block_t {
+	int ms_retval;
+	unsigned char* ms_key;
+	int* ms_size;
+} ms_ecall_hash_block_t;
+
 typedef struct ms_ocall_err_different_size_t {
 	const char* ms_str;
 } ms_ocall_err_different_size_t;
@@ -147,6 +153,17 @@ sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue table[2
 	ms.ms_data = data;
 	ms.ms_size = size;
 	status = sgx_ecall(eid, 3, &ocall_table_Enclave, &ms);
+	return status;
+}
+
+sgx_status_t ecall_hash_block(sgx_enclave_id_t eid, int* retval, unsigned char key[256], int* size)
+{
+	sgx_status_t status;
+	ms_ecall_hash_block_t ms;
+	ms.ms_key = (unsigned char*)key;
+	ms.ms_size = size;
+	status = sgx_ecall(eid, 4, &ocall_table_Enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }
 
