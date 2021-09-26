@@ -25,7 +25,7 @@
 #include "structure.hpp"
 
 #define BLOCK_SIZE 10
-#define TABLE_SIZE 10
+#define TABLE_SIZE 10000
 
 #include "paillier.h"
 
@@ -232,7 +232,6 @@ void acpy(unsigned char cpy[], char data[])
 
 int main()
 {
-    std::cout << "check point2" << std::endl;
 
     //ソケットの生成
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0); //アドレスドメイン, ソケットタイプ, プロトコル
@@ -318,7 +317,6 @@ int main()
     send(connect, iqmp, 256, 0);
     send(connect, &e, sizeof(e), 0);
 
-    std::cout << "check point 1" << std::endl;
 
     std::string hexPubKey = getPubKey("App/pubkey.txt");
     std::string hexSecKey = getSecKey("App/seckey.txt");
@@ -326,7 +324,6 @@ int main()
     paillier_pubkey_t* pubKey = paillier_pubkey_from_hex(&hexPubKey[0]);
     paillier_prvkey_t* secKey = paillier_prvkey_from_hex(&hexSecKey[0], pubKey);
 
-    std::cout << "check point 5" << std::endl;
 
     int index = 0;
     std::unordered_map<std::string, int> indices;    //hash_mapから配列の添字を読み込む
@@ -338,7 +335,6 @@ int main()
         cnt_table[i] =  (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt);
     }
 
-    std::cout << "check point4" << std::endl;
 
 
 
@@ -370,7 +366,6 @@ int main()
             count += bytes;
         }while(count < bf_size);
 
-        std::cout << "check point3" <<std::endl;
 
 
         //デシリアライズ
@@ -385,29 +380,14 @@ int main()
                 indices[cnt_list[j].h] = index;
             }
             paillier_ciphertext_t* encryptedCnt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-            paillier_plaintext_t* dec3;
-            dec3 = paillier_dec(NULL, pubKey, secKey, encryptedCnt);
-            std::cout << "元々のテーブルの値" << std::endl;
-            gmp_printf("Decrypted value: %Zd\n", dec3);
-
 
 
             paillier_ciphertext_t* encryptedSum = paillier_create_enc_zero();
 
             paillier_ciphertext_t* encryptedValue = paillier_ciphertext_from_bytes((void*)cnt_list[j].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
-            paillier_plaintext_t* dec1;
-            dec1 = paillier_dec(NULL, pubKey, secKey, encryptedValue);
-            std::cout << "This value is sent by client." << std::endl;
-            gmp_printf("Decrypted value: %Zd\n", dec1);
-
  
             paillier_mul(pubKey, encryptedSum, encryptedCnt, encryptedValue);
-            paillier_plaintext_t* dec2;
-            dec2 = paillier_dec(NULL, pubKey, secKey, encryptedSum);
-            std::cout << "This value is the sum." << std::endl;
-            gmp_printf("Decrypted value: %Zd\n", dec2);
-
 
 
             char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, encryptedSum);
@@ -419,12 +399,6 @@ int main()
 
             send_list.push_back(w);
 
-            paillier_ciphertext_t* ctxt4 = paillier_ciphertext_from_bytes((void*)send_list[j].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-            paillier_plaintext_t* dec4;
-            dec4 = paillier_dec(NULL, pubKey, secKey, ctxt4);
-            gmp_printf("w.byteEncryptedValue: %Zd\n", dec4);
-
-
 
             std::memcpy(cnt_table[indices[cnt_list[j].h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
@@ -435,7 +409,6 @@ int main()
             paillier_freeciphertext(encryptedValue);
             paillier_freeciphertext(encryptedCnt);
             paillier_freeciphertext(encryptedSum);
-            paillier_freeplaintext(dec1);
             free(byteEncryptedSum);
 
             paillier_plaintext_t* dec;
@@ -458,9 +431,6 @@ int main()
         int s = ss.str().size();
         send(connect, &s, sizeof(int), 0);
         send(connect, bf, s, 0);
-
-        std::cout << "we are here." << std::endl;
-
 
         count = 0;
         do {

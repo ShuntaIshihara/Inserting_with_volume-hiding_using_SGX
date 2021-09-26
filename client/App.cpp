@@ -40,7 +40,7 @@ std::vector<int> select_0(double p, int key_max);
 std::string sha256(SHA256_CTX sha_ctx, std::string m);
 std::vector<cnt_data> deserialize(char buffer[], int size);
 
-
+std::vector<struct keyvalue> stash;
 
 int main(){
 
@@ -81,7 +81,6 @@ int main(){
     int bytes;
     do {
         bytes = recv(sockfd, n + count, 256 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
         if (bytes < 0) {
             std::cerr << "recv n error\n";
             return 1;
@@ -92,7 +91,6 @@ int main(){
     count = 0;
     do {
         bytes = recv(sockfd, d + count, 256 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
         if (bytes < 0) {
             std::cerr << "recv d error\n";
             return 1;
@@ -103,7 +101,6 @@ int main(){
     count = 0;
     do {
         bytes = recv(sockfd, p + count, 256 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
         if (bytes < 0) {
             std::cerr << "recv p error\n";
             return 1;
@@ -114,7 +111,6 @@ int main(){
     count = 0;
     do {
         bytes = recv(sockfd, q + count, 256 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
         if (bytes < 0) {
             std::cerr << "recv q error\n";
             return 1;
@@ -125,7 +121,6 @@ int main(){
     count = 0;
     do {
         bytes = recv(sockfd, dmp1 + count, 256 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
         if (bytes < 0) {
             std::cerr << "recv q error\n";
             return 1;
@@ -136,7 +131,6 @@ int main(){
     count = 0;
     do {
         bytes = recv(sockfd, dmq1 + count, 256 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
         if (bytes < 0) {
             std::cerr << "recv dmq1 error\n";
             return 1;
@@ -147,7 +141,6 @@ int main(){
     count = 0;
     do {
         bytes = recv(sockfd, iqmp + count, 256 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
         if (bytes < 0) {
             std::cerr << "recv iqmp error\n";
             return 1;
@@ -158,7 +151,6 @@ int main(){
     count = 0;
     do {
         bytes = recv(sockfd, &e + count, 8 - count, 0);
-        std::cout << "bytes = " << bytes << std::endl;
         if (bytes < 0) {
             std::cerr << "recv e error\n";
             return 1;
@@ -230,9 +222,6 @@ int main(){
         for (int i = 0; i < (int)keys.size(); ++i) {
             //sha256ハッシュ値生成
             std::string h = sha256(sha_ctx, key_list[keys[i]]);
-            // 確認
-            std::cout << "ハッシュ値: ";
-            std::cout << h << std::endl;
 
             hash_list[h] = key_list[keys[i]];
 
@@ -260,9 +249,6 @@ int main(){
         for (int i = 0; i < (int)keys0.size(); ++i) {
             //sha256ハッシュ値生成
             std::string h = sha256(sha_ctx, key_list[keys0[i]]);
-            // 確認
-            std::cout << "ハッシュ値: ";
-            std::cout << h << std::endl;
 
             hash_list[h] = key_list[keys0[i]];
 
@@ -284,13 +270,11 @@ int main(){
             cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
             o_archive(cnt_list);
         }
-//        std::cout << ss.str() << std::endl;
 
         char buffer[ss.str().size()];
         std::memcpy(buffer, ss.str().data(), ss.str().size());
 
         int bf_size = ss.str().size();
-        std::cout << bf_size << std::endl;
 
         send(sockfd, &bf_size, sizeof(int), 0);
         send(sockfd, buffer, bf_size, 0);
@@ -324,21 +308,25 @@ int main(){
         //デシリアライズ
         std::vector<cnt_data> recv_list = deserialize(bf, s);
 
+        int index;
+
         for (int i = 0; i < (int)recv_list.size(); ++i) {
             if (key != hash_list[recv_list[i].h]) {
-                std::cout << "continue" << std::endl;
                 continue;
             }
 
             paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)recv_list[i].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
             paillier_plaintext_t* dec;
             dec = paillier_dec(NULL, pubKey, secKey, ctxt);
-            gmp_printf("Volume: %Zd\n", dec);
+            index = mpz_get_si((mpz_srcptr)dec);
         }
 
         struct keyvalue data;
         size_t enc_len = 256;
         size_t dec_len = 0;
+        std::stringstream iss;
+        iss << index;
+        line = line + "_" + iss.str();
         unsigned char *in_key = (unsigned char*)line.c_str();
         int size = 256;
         
@@ -363,7 +351,7 @@ int main(){
             client_err_print(status);
         }
 
-        /* 確認 */
+        /* 確認 
         status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
                 (const unsigned char *)data.key, enc_len);
         if (status != SUCCESS) {
@@ -380,17 +368,16 @@ int main(){
         }
         std::cout << check_key << std::endl;
 
-        /* 確認 */
+         確認 */
 
                 
         send(sockfd, &data, sizeof(struct keyvalue), 0); //送信
 
         //stash受信
-        struct keyvalue stash[2];
+        struct keyvalue st[2];
         count = 0;
         do {
-            bytes = recv(sockfd, &stash[0], sizeof(struct keyvalue), 0);
-            std::cout << "bytes = " << bytes << std::endl;
+            bytes = recv(sockfd, &st[0], sizeof(struct keyvalue), 0);
             if (bytes < 0) {
                 std::cerr << "recv stash[0] error\n";
                 return 1;
@@ -400,8 +387,7 @@ int main(){
 
         count = 0;
         do {
-            bytes = recv(sockfd, &stash[1], sizeof(struct keyvalue), 0);
-            std::cout << "bytes = " << bytes << std::endl;
+            bytes = recv(sockfd, &st[1], sizeof(struct keyvalue), 0);
             if (bytes < 0) {
                 std::cerr << "recv stash[1] error\n";
                 return 1;
@@ -409,10 +395,9 @@ int main(){
             count+=bytes;
         }while(count < 256);
 
-        std::cout << "stash[0] = {";
-
+        
         status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)stash[0].key, enc_len);
+                (const unsigned char *)st[0].key, enc_len);
         if (status != SUCCESS) {
             std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
             client_err_print(status);
@@ -420,50 +405,18 @@ int main(){
 
         unsigned char key0[dec_len];
         status = client_rsa_decrypt_sha256(priv_key, key0, &dec_len,
-                (const unsigned char *)stash[0].key, enc_len);
+                (const unsigned char *)st[0].key, enc_len);
         if (status != SUCCESS) {
             std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
             client_err_print(status);
         }
-        std::cout << "key(" << key0 << "), value(";
-
-        for (int i = 0; i < 9; ++i) {
-            status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                    (const unsigned char *)stash[0].value[i], enc_len);
-            if (status != SUCCESS) {
-                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-                client_err_print(status);
-            }
-
-            unsigned char value0[dec_len];
-            status = client_rsa_decrypt_sha256(priv_key, value0, &dec_len,
-                    (const unsigned char *)stash[0].value[i], enc_len);
-            if (status != SUCCESS) {
-                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-                client_err_print(status);
-            }
-            std::cout << value0 << ", ";
+        if (std::strncmp((char*)key0, "dummy_", 6) != 0) {
+            stash.push_back(st[0]);
+            std::cout << "key(" << key0 << ")" << std::endl;
         }
-        status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)stash[0].value[9], enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
-
-        unsigned char value1[dec_len];
-        status = client_rsa_decrypt_sha256(priv_key, value1, &dec_len,
-                (const unsigned char *)stash[0].value[9], enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
-        std::cout << value1 << ")}\n";
-
-        std::cout << "stash[1] = {";
 
         status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)stash[1].key, enc_len);
+                (const unsigned char *)st[1].key, enc_len);
         if (status != SUCCESS) {
             std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
             client_err_print(status);
@@ -471,45 +424,15 @@ int main(){
 
         unsigned char key1[dec_len];
         status = client_rsa_decrypt_sha256(priv_key, key1, &dec_len,
-                (const unsigned char *)stash[1].key, enc_len);
+                (const unsigned char *)st[1].key, enc_len);
         if (status != SUCCESS) {
             std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
             client_err_print(status);
         }
-        std::cout << "key(" << key1 << "), value(";
-
-        for (int i = 0; i < 9; ++i) {
-            status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                    (const unsigned char *)stash[1].value[i], enc_len);
-            if (status != SUCCESS) {
-                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-                client_err_print(status);
-            }
-
-            unsigned char value2[dec_len];
-            status = client_rsa_decrypt_sha256(priv_key, value2, &dec_len,
-                    (const unsigned char *)stash[1].value[i], enc_len);
-            if (status != SUCCESS) {
-                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-                client_err_print(status);
-            }
-            std::cout << value2 << ", ";
+        if (std::strncmp((char*)key1, "dummy_", 6) != 0) {
+            stash.push_back(st[1]);
+            std::cout << "key(" << key1 << "), value(";
         }
-        status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)stash[1].value[9], enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
-
-        unsigned char value3[dec_len];
-        status = client_rsa_decrypt_sha256(priv_key, value3, &dec_len,
-                (const unsigned char *)stash[1].value[9], enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
-        std::cout << value3 << ")}\n";
         
     }
 

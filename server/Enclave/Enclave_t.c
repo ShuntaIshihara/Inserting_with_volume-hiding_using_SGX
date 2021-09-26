@@ -497,7 +497,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_insertion_start(void* pms)
 	ms_ecall_insertion_start_t* ms = SGX_CAST(ms_ecall_insertion_start_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
 	struct keyvalue* _tmp_table = ms->ms_table;
-	size_t _len_table = 20 * sizeof(struct keyvalue);
+	size_t _len_table = 20000 * sizeof(struct keyvalue);
 	struct keyvalue* _in_table = NULL;
 	struct keyvalue* _tmp_data = ms->ms_data;
 	size_t _len_data = sizeof(struct keyvalue);
@@ -565,7 +565,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_insertion_start(void* pms)
 
 	}
 
-	ecall_insertion_start((struct keyvalue (*)[10])_in_table, _in_data, _in_size);
+	ecall_insertion_start((struct keyvalue (*)[10000])_in_table, _in_data, _in_size);
 	if (_in_table) {
 		if (memcpy_s(_tmp_table, _len_table, _in_table, _len_table)) {
 			status = SGX_ERROR_UNEXPECTED;
