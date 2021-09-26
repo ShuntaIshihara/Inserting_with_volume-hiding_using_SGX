@@ -63,27 +63,6 @@ int main(){
 	//ソケット接続要求
 	connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)); //ソケット, アドレスポインタ, アドレスサイズ
 
-    //opnessl shaのコンテキスト初期化
-
-	SHA256_CTX sha_ctx;
-	SHA256_Init(&sha_ctx); // コンテキストを初期化
-
-    //pubkey, seckey読み込み
-    std::string hexPubKey = getPubKey("pubkey.txt");
-    std::string hexSecKey = getSecKey("seckey.txt");
-
-    paillier_pubkey_t* pubKey = paillier_pubkey_from_hex(&hexPubKey[0]);
-    paillier_prvkey_t* secKey = paillier_prvkey_from_hex(&hexSecKey[0], pubKey);
-
-    //キー -> キー番号　リストの宣言と初期化
-    std::unordered_map<std::string, int> n_list;
-
-    //キー番号 -> キー　リストの宣言と初期化
-    std::vector<std::string> key_list;
-
-    
-
-
     //鍵の成分の生成
     int n_byte_size = 256;
     unsigned char n[256];
@@ -197,6 +176,25 @@ int main(){
     status = client_create_rsa_pub1_key(n_byte_size, sizeof(e),
             (const unsigned char *)n, (const unsigned char *)&e, &pub_key);
     client_err_print(status);
+
+
+    //opnessl shaのコンテキスト初期化
+
+	SHA256_CTX sha_ctx;
+	SHA256_Init(&sha_ctx); // コンテキストを初期化
+
+    //pubkey, seckey読み込み
+    std::string hexPubKey = getPubKey("pubkey.txt");
+    std::string hexSecKey = getSecKey("seckey.txt");
+
+    paillier_pubkey_t* pubKey = paillier_pubkey_from_hex(&hexPubKey[0]);
+    paillier_prvkey_t* secKey = paillier_prvkey_from_hex(&hexSecKey[0], pubKey);
+
+    //キー -> キー番号　リストの宣言と初期化
+    std::unordered_map<std::string, int> n_list;
+
+    //キー番号 -> キー　リストの宣言と初期化
+    std::vector<std::string> key_list;
 
 
     //データの挿入操作
