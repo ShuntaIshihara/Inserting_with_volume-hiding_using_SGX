@@ -341,7 +341,7 @@ int main()
 
 
     //受信
-    for (int i = 0; i < TABLE_SIZE; ++i) {
+    for (int i = 0; i < BLOCK_SIZE*TABLE_SIZE; ++i) {
         struct keyvalue data;
 
         int count = 0;
