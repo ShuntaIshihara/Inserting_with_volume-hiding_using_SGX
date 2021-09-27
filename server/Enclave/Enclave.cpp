@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sgx_tcrypto.h>
 
-#define TABLE_SIZE 10000
+#define TABLE_SIZE 100
 
 //公開鍵、秘密鍵の生成
 int n_byte_size = 256;
@@ -217,7 +217,7 @@ int is_dummy(unsigned char *k)
     return 0;
 }
 
-struct keyvalue cuckoo(struct keyvalue table[2][TABLE_SIZE], struct keyvalue data, int size, int tableID, int cnt, int limit)
+struct keyvalue cuckoo(struct keyvalue *table, struct keyvalue data, int size, int tableID, int cnt, int limit)
 {
     if (cnt >= limit) return data;
 
@@ -227,8 +227,8 @@ struct keyvalue cuckoo(struct keyvalue table[2][TABLE_SIZE], struct keyvalue dat
     pos[1] = hash_2(decrypt(data.key), size);
 
     //追い出し操作をする
-    struct keyvalue w = table[tableID][pos[tableID]];
-    table[tableID][pos[tableID]] = data;
+    struct keyvalue w = table[tableID*TABLE_SIZE+pos[tableID]];
+    table[tableID*TABLE_SIZE+pos[tableID]] = data;
 
     unsigned char *k = decrypt(w.key);
     if (is_dummy(k)) return w;
@@ -237,12 +237,14 @@ struct keyvalue cuckoo(struct keyvalue table[2][TABLE_SIZE], struct keyvalue dat
     return cuckoo(table, w, size, (tableID+1)%2, cnt+1, limit);
 }
 
-void ecall_insertion_start(struct keyvalue table[2][TABLE_SIZE], struct keyvalue *data, int *size)
+void ecall_insertion_start(struct keyvalue *table, size_t table_size, struct keyvalue *data, int *size)
 {
 	struct keyvalue stash[2];
+    ocall_print("enclave check point 1");
 
     //新しいキーバリューデータを挿入し、托卵操作を行う
     stash[0] = cuckoo(table, *data, *size, 0, 0, 5);
+    ocall_print("enclave check point 2");
 
     //ランダムなキーバリューデータ（ダミーデータ）を生成
     struct keyvalue dummy;

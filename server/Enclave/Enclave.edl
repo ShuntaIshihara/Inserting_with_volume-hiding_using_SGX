@@ -1,6 +1,6 @@
 enclave
 {
-#define TABLE_SIZE 10000
+#define TABLE_SIZE 100
     struct keyvalue {
         unsigned char key[256];
         unsigned char value[10][256];
@@ -20,7 +20,7 @@ enclave
                 [in,out]long *e);
         public void ecall_encrypt([in,out]unsigned char t_data[256], [in,string]unsigned char *data);
         public void ecall_decrypt([in,out]unsigned char dec[256], [in]unsigned char enc[256]);
-		public void ecall_insertion_start([in,out]struct keyvalue table[2][TABLE_SIZE], [in]struct keyvalue *data, [in]int *size);
+		public void ecall_insertion_start([in,size=table_size]struct keyvalue *table, size_t table_size, [in]struct keyvalue *data, [in]int *size);
         public int ecall_hash_block([in]unsigned char key[256], [in]int *size);
 	};
 
