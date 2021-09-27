@@ -330,7 +330,7 @@ int main()
     int index = 0;
     std::unordered_map<std::string, int> indices;    //hash_mapから配列の添字を読み込む
     std::vector<char*> cnt_table;                    //hash_mapから読み込んだ添字の場所に格納する
-    for (int i = 0; i < TABLE_SIZE; ++i) {
+    for (int i = 0; i < BLOCK_SIZE*TABLE_SIZE; ++i) {
         paillier_plaintext_t* m = paillier_plaintext_from_ui(0);
         paillier_ciphertext_t* ctxt;
         ctxt = paillier_enc(NULL, pubKey, m, paillier_get_rand_devurandom);
