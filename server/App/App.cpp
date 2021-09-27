@@ -24,8 +24,8 @@
 #include <cereal/types/array.hpp>
 #include "structure.hpp"
 
-#define BLOCK_SIZE 10
-#define TABLE_SIZE 10000
+#define BLOCK_SIZE 1000
+#define TABLE_SIZE 100
 
 #include "paillier.h"
 
@@ -170,7 +170,7 @@ int initialize_enclave()
 }
 
 //テーブルの初期化関数
-void table_init(struct keyvalue table[BLOCK_SIZE][2][TABLE_SIZE])
+void table_init(struct keyvalue *table)
 {
     for (int i = 0; i < BLOCK_SIZE; i++) {
         for (int j = 0; j < TABLE_SIZE; j++) {
@@ -178,13 +178,13 @@ void table_init(struct keyvalue table[BLOCK_SIZE][2][TABLE_SIZE])
             std::strcat((char *)key, std::to_string(i).c_str());
             std::strcat((char *)key, (char *)"0");
             std::strcat((char *)key, std::to_string(j).c_str());
-            sgx_status_t status = ecall_encrypt(global_eid, table[i][0][j].key, key);
+            sgx_status_t status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + j].key, key);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             key[7] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, table[i][1][j].key, key);
+            status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + TABLE_SIZE + j].key, key);
             if (status != SGX_SUCCESS) {
                     sgx_error_print(status);
             }
@@ -193,13 +193,13 @@ void table_init(struct keyvalue table[BLOCK_SIZE][2][TABLE_SIZE])
             std::strcat((char *)value, (char *)"0");
             std::random_device rnd;
             std::strcat((char *)value, std::to_string(rnd()).c_str());
-            status = ecall_encrypt(global_eid, table[i][0][j].value[0], value);
+            status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + j].value[0], value);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             value[12] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, table[i][1][j].value[0], value);
+            status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + TABLE_SIZE + j].value[0], value);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
@@ -208,13 +208,13 @@ void table_init(struct keyvalue table[BLOCK_SIZE][2][TABLE_SIZE])
                 value[12] = (unsigned char)'0';
                 value[13] = '\0';
                 std::strcat((char *)value, std::to_string(rnd()).c_str());
-                status = ecall_encrypt(global_eid, table[i][0][j].value[k], value);
+                status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + j].value[k], value);
                 if (status != SGX_SUCCESS) {
                     sgx_error_print(status);
                 }
 
                 value[12] = (unsigned char)'1';
-                status = ecall_encrypt(global_eid, table[i][1][j].value[k], value);
+                status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + TABLE_SIZE + j].value[k], value);
                 if (status != SGX_SUCCESS) {
                     sgx_error_print(status);
                 }
@@ -303,7 +303,9 @@ int main()
     }
 
     //Tableの初期化
-    struct keyvalue table[BLOCK_SIZE][2][TABLE_SIZE];
+//    struct keyvalue table[BLOCK_SIZE][2][TABLE_SIZE];
+    struct keyvalue *table;
+    table = (struct keyvalue *)malloc(sizeof(struct keyvalue)*BLOCK_SIZE*2*TABLE_SIZE);
     table_init(table);
 
 
@@ -327,12 +329,12 @@ int main()
 
     int index = 0;
     std::unordered_map<std::string, int> indices;    //hash_mapから配列の添字を読み込む
-    char* cnt_table[TABLE_SIZE];                               //hash_mapから読み込んだ添字の場所に格納する
+    std::vector<char*> cnt_table;                    //hash_mapから読み込んだ添字の場所に格納する
     for (int i = 0; i < TABLE_SIZE; ++i) {
         paillier_plaintext_t* m = paillier_plaintext_from_ui(0);
         paillier_ciphertext_t* ctxt;
         ctxt = paillier_enc(NULL, pubKey, m, paillier_get_rand_devurandom);
-        cnt_table[i] =  (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt);
+        cnt_table.push_back((char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt));
     }
 
 
@@ -456,12 +458,13 @@ int main()
 
 
         int table_size = TABLE_SIZE;
-        status = ecall_insertion_start(global_eid, table[block], &data, &table_size);
+        status = ecall_insertion_start(global_eid, table+block*2*TABLE_SIZE, sizeof(struct keyvalue)*2*TABLE_SIZE, &data, &table_size);
         if (status != SGX_SUCCESS) {
             sgx_error_print(status);
 
             return -1;
         }
+        std::cout << "check point 1" << std::endl;
 
         //stash送信
         send(connect, &stash[0], sizeof(struct keyvalue), 0); //送信
@@ -470,20 +473,22 @@ int main()
         unsigned char dec[256];
         std::cout << "T1 = {";
         for (int i = 0; i < TABLE_SIZE - 1; i++) {
-            ecall_decrypt(global_eid, dec, table[block][0][i].key);
+            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE + i].key);
             std::cout << dec << ", ";
         }
-        ecall_decrypt(global_eid, dec, table[block][0][TABLE_SIZE-1].key);
+        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE-1].key);
         std::cout << dec << "}" << std::endl;
 
         std::cout << "T2 = {";
         for (int i = 0; i < TABLE_SIZE - 1; i++) {
-            ecall_decrypt(global_eid, dec, table[block][1][i].key);
+            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+i].key);
             std::cout << dec << ", ";
         }
-        ecall_decrypt(global_eid, dec, table[block][1][TABLE_SIZE-1].key);
+        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+TABLE_SIZE-1].key);
         std::cout << dec << "}" << std::endl;
     }
+
+    free(table);
 
     paillier_freepubkey(pubKey);
     paillier_freeprvkey(secKey);

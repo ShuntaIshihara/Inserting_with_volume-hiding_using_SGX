@@ -25,6 +25,7 @@ typedef struct ms_ecall_decrypt_t {
 
 typedef struct ms_ecall_insertion_start_t {
 	struct keyvalue* ms_table;
+	size_t ms_table_size;
 	struct keyvalue* ms_data;
 	int* ms_size;
 } ms_ecall_insertion_start_t;
@@ -145,11 +146,12 @@ sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, unsigned char dec[256], unsigne
 	return status;
 }
 
-sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue table[2][10000], struct keyvalue* data, int* size)
+sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue* table, size_t table_size, struct keyvalue* data, int* size)
 {
 	sgx_status_t status;
 	ms_ecall_insertion_start_t ms;
-	ms.ms_table = (struct keyvalue*)table;
+	ms.ms_table = table;
+	ms.ms_table_size = table_size;
 	ms.ms_data = data;
 	ms.ms_size = size;
 	status = sgx_ecall(eid, 3, &ocall_table_Enclave, &ms);

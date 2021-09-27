@@ -51,6 +51,7 @@ typedef struct ms_ecall_decrypt_t {
 
 typedef struct ms_ecall_insertion_start_t {
 	struct keyvalue* ms_table;
+	size_t ms_table_size;
 	struct keyvalue* ms_data;
 	int* ms_size;
 } ms_ecall_insertion_start_t;
@@ -497,7 +498,8 @@ static sgx_status_t SGX_CDECL sgx_ecall_insertion_start(void* pms)
 	ms_ecall_insertion_start_t* ms = SGX_CAST(ms_ecall_insertion_start_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
 	struct keyvalue* _tmp_table = ms->ms_table;
-	size_t _len_table = 20000 * sizeof(struct keyvalue);
+	size_t _tmp_table_size = ms->ms_table_size;
+	size_t _len_table = _tmp_table_size;
 	struct keyvalue* _in_table = NULL;
 	struct keyvalue* _tmp_data = ms->ms_data;
 	size_t _len_data = sizeof(struct keyvalue);
@@ -516,11 +518,6 @@ static sgx_status_t SGX_CDECL sgx_ecall_insertion_start(void* pms)
 	sgx_lfence();
 
 	if (_tmp_table != NULL && _len_table != 0) {
-		if ( _len_table % sizeof(*_tmp_table) != 0)
-		{
-			status = SGX_ERROR_INVALID_PARAMETER;
-			goto err;
-		}
 		_in_table = (struct keyvalue*)malloc(_len_table);
 		if (_in_table == NULL) {
 			status = SGX_ERROR_OUT_OF_MEMORY;
@@ -565,13 +562,7 @@ static sgx_status_t SGX_CDECL sgx_ecall_insertion_start(void* pms)
 
 	}
 
-	ecall_insertion_start((struct keyvalue (*)[10000])_in_table, _in_data, _in_size);
-	if (_in_table) {
-		if (memcpy_s(_tmp_table, _len_table, _in_table, _len_table)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-	}
+	ecall_insertion_start(_in_table, _tmp_table_size, _in_data, _in_size);
 
 err:
 	if (_in_table) free(_in_table);
