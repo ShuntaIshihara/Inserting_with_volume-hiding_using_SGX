@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <unordered_map>
+#include <time.h>
 #include <sys/socket.h> //アドレスドメイン
 #include <sys/types.h> //ソケットタイプ
 #include <arpa/inet.h> //バイトオーダの変換に利用
@@ -24,8 +25,8 @@
 #include <cereal/types/array.hpp>
 #include "structure.hpp"
 
-#define BLOCK_SIZE 1000
-#define TABLE_SIZE 100
+#define BLOCK_SIZE 100
+#define TABLE_SIZE 997
 
 #include "paillier.h"
 
@@ -193,18 +194,18 @@ void table_init(struct keyvalue *table)
             std::strcat((char *)value, (char *)"0");
             std::random_device rnd;
             std::strcat((char *)value, std::to_string(rnd()).c_str());
-            status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + j].value[0], value);
+            status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + j].value, value);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
             value[12] = (unsigned char)'1';
-            status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + TABLE_SIZE + j].value[0], value);
+            status = ecall_encrypt(global_eid, table[i*2*TABLE_SIZE + TABLE_SIZE + j].value, value);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
             }
 
-            for (int k = 1; k < 10; k++) {
+/*            for (int k = 1; k < 10; k++) {
                 value[12] = (unsigned char)'0';
                 value[13] = '\0';
                 std::strcat((char *)value, std::to_string(rnd()).c_str());
@@ -218,7 +219,7 @@ void table_init(struct keyvalue *table)
                 if (status != SGX_SUCCESS) {
                     sgx_error_print(status);
                 }
-            }
+            }*/
         }
     }
 }
@@ -230,8 +231,23 @@ void acpy(unsigned char cpy[], char data[])
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc != 2) {
+        std::cerr << "you need to set commandline arguments." << std::endl;
+        return 1;
+    }
+
+    std::ofstream ofs(argv[1]);
+    if (!ofs)
+    {
+        std::cout << "ファイルが開けませんでした。" << std::endl;
+        return 1;
+    }
+    long sum_insertion = 0;
+    long sum_volume = 0;
+
+    
 
     //ソケットの生成
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0); //アドレスドメイン, ソケットタイプ, プロトコル
@@ -341,11 +357,25 @@ int main()
 
 
     //受信
-    for (int i = 0; i < BLOCK_SIZE*TABLE_SIZE; ++i) {
-        struct keyvalue data;
-
+    int cnt = 0;
+    while (1) {
         int count = 0;
         int bytes;
+        int flag;
+        do {
+            bytes = recv(connect, &flag + count, (int)sizeof(int) - count, 0);
+            if (bytes < 0) {
+                std::cerr << "recv flag error." << std::endl;
+                return 1;
+            }
+            count += bytes;
+        }while(count < sizeof(int));
+
+        if (flag) break;
+
+        struct keyvalue data;
+
+        count = 0;
         int bf_size;
         do {
             bytes = recv(connect, &bf_size + count, (int)sizeof(int) - count, 0);
@@ -375,7 +405,7 @@ int main()
 
         std::vector<cnt_data> send_list;
 
-
+        time_t start_volume = clock();
         for (int j = 0; j < cnt_list.size(); ++j) {
             if(indices.find(cnt_list[j].h) == indices.end()) {
                 index++;
@@ -421,6 +451,8 @@ int main()
 
 
         }
+        time_t end_volume = clock();
+        sum_volume += (end_volume - start_volume);
 
         std::stringstream ss;
         {
@@ -458,13 +490,15 @@ int main()
 
 
         int table_size = TABLE_SIZE;
+        clock_t start_insertion = clock();
         status = ecall_insertion_start(global_eid, table+block*2*TABLE_SIZE, sizeof(struct keyvalue)*2*TABLE_SIZE, &data, &table_size);
         if (status != SGX_SUCCESS) {
             sgx_error_print(status);
 
             return -1;
         }
-        std::cout << "check point 1" << std::endl;
+        clock_t end_insertion = clock();
+        sum_insertion += (end_insertion - start_insertion);
 
         //stash送信
         send(connect, &stash[0], sizeof(struct keyvalue), 0); //送信
@@ -486,7 +520,18 @@ int main()
         }
         ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+TABLE_SIZE-1].key);
         std::cout << dec << "}" << std::endl;
+
+        cnt++;
     }
+
+    double average_insertion = ((double)sum_insertion / (double)cnt) / CLOCKS_PER_SEC;
+    double average_volume = ((double)sum_volume / (double)cnt) / CLOCKS_PER_SEC;
+
+    ofs << "ボリューム更新の平均CPU使用時間: ";
+    ofs << std::to_string(average_volume) << std::endl;
+
+    ofs << "挿入の平均CPU使用時間: ";
+    ofs << std::to_string(average_insertion) << std::endl;
 
     free(table);
 

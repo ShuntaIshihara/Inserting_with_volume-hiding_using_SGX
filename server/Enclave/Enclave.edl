@@ -1,9 +1,9 @@
 enclave
 {
-#define TABLE_SIZE 100
+#define TABLE_SIZE 997
     struct keyvalue {
         unsigned char key[256];
-        unsigned char value[10][256];
+        unsigned char value[256];
     };
 
 	trusted

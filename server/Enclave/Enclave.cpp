@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sgx_tcrypto.h>
 
-#define TABLE_SIZE 100
+#define TABLE_SIZE 997
 
 //公開鍵、秘密鍵の生成
 int n_byte_size = 256;
@@ -231,7 +231,7 @@ struct keyvalue cuckoo(struct keyvalue *table, struct keyvalue data, int size, i
     table[tableID*TABLE_SIZE+pos[tableID]] = data;
 
     unsigned char *k = decrypt(w.key);
-    if (is_dummy(k)) return w;
+//    if (is_dummy(k)) return w;
     free(k);
     //追い出されたデータをもう一方のテーブルに移す
     return cuckoo(table, w, size, (tableID+1)%2, cnt+1, limit);
@@ -243,7 +243,7 @@ void ecall_insertion_start(struct keyvalue *table, size_t table_size, struct key
     ocall_print("enclave check point 1");
 
     //新しいキーバリューデータを挿入し、托卵操作を行う
-    stash[0] = cuckoo(table, *data, *size, 0, 0, 5);
+    stash[0] = cuckoo(table, *data, *size, 0, 0, 7);
     ocall_print("enclave check point 2");
 
     //ランダムなキーバリューデータ（ダミーデータ）を生成
@@ -260,7 +260,7 @@ void ecall_insertion_start(struct keyvalue *table, size_t table_size, struct key
     strncat((char *)v, (const char *)wc, 26);
     v[31] = '\0';
     encrypt(dummy.key, v);
-    for (int i = 0; i < 10; i++) {
+//    for (int i = 0; i < 10; i++) {
         v[6] = '\0';
         status = sgx_read_rand((unsigned char *)&rand, 4);
         if (status != SGX_SUCCESS) {
@@ -269,11 +269,11 @@ void ecall_insertion_start(struct keyvalue *table, size_t table_size, struct key
         }
         swprintf(wc, sizeof(wc)/sizeof(wchar_t), L"%d", rand);
         strncat((char *)v, (const char *)wc, 26);
-        encrypt(dummy.value[i], v);
+        encrypt(dummy.value, v);
         v[31] = '\0';
-    }
+//    }
     //ダミーデータを挿入し、托卵操作を行う
-    stash[1] = cuckoo(table, dummy, *size, 0, 0, 5);
+    stash[1] = cuckoo(table, dummy, *size, 0, 0, 7);
     //OCALLでstashに格納するものをクライアントに返す
     ocall_return_stash(stash);
 }

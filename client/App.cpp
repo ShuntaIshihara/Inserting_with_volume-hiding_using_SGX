@@ -1,4 +1,5 @@
 #include <iostream> //標準入出力
+#include <fstream>
 #include <sys/socket.h> //アドレスドメイン
 #include <sys/types.h> //ソケットタイプ
 #include <arpa/inet.h> //バイトオーダの変換に利用
@@ -9,6 +10,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <time.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
@@ -42,7 +44,23 @@ std::vector<cnt_data> deserialize(char buffer[], int size);
 
 std::vector<struct keyvalue> stash;
 
-int main(){
+int main(int argc, char *argv[]){
+    if (argc != 2) {
+        std::cerr << "you need to set commandline arguments." << std::endl;
+        return 1;
+    }
+
+    std::ofstream ofs((const char *)argv[1]);
+    if (!ofs)
+    {
+        std::cout << "ファイルが開けませんでした。" << std::endl;
+        return 1;
+    }
+    long sum_volume = 0;
+    long sum_insertion = 0;
+    long sum_all = 0;
+
+
 
 	//ソケットの生成
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0); //アドレスドメイン, ソケットタイプ, プロトコル
@@ -192,7 +210,20 @@ int main(){
     //データの挿入操作
     std::string line;
     int cnt = 0;
+    int loop_cnt = 0;
     while(std::cin >> line) {
+        time_t start_all = clock();
+
+        int flag = 0;
+        if (line == "quit" || line == "q") {
+            flag = 1;
+        }
+        send(sockfd, &flag, sizeof(int), 0);
+        if (flag) {
+            break;
+        }
+
+        time_t start_volume = clock();
         
         //新しいキーであれば、キーリストに追加
         if (n_list.find(line) == n_list.end()) {
@@ -278,6 +309,8 @@ int main(){
 
         send(sockfd, &bf_size, sizeof(int), 0);
         send(sockfd, buffer, bf_size, 0);
+        time_t end_volume = clock();
+        sum_volume += (end_volume - start_volume);
 
         cnt_list.clear();
 
@@ -321,35 +354,28 @@ int main(){
             index = mpz_get_si((mpz_srcptr)dec);
         }
 
+        time_t start_insertion = clock();
+
         struct keyvalue data;
         size_t enc_len = 256;
         size_t dec_len = 0;
         std::stringstream iss;
         iss << index;
-        line = line + "_" + iss.str();
+        line = line + "," + iss.str();
         unsigned char *in_key = (unsigned char*)line.c_str();
         int size = 256;
         
         status = client_rsa_encrypt_sha256((const void *)pub_key, data.key, (size_t *)&size, in_key, std::strlen((const char *)in_key)+1);
-        client_err_print(status);
-
-        status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)data.key, enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
-
-        
+        client_err_print(status);        
 
 
-        for (int i = 0; i < 10; ++i) {
+//        for (int i = 0; i < 10; ++i) {
             std::cin >> line;
             unsigned char *in_value = (unsigned char*)line.c_str();
             status = client_rsa_encrypt_sha256((const void *)pub_key, 
-                    data.value[i], (size_t *)&size, in_value, std::strlen((const char *)in_value)+1);
+                    data.value, (size_t *)&size, in_value, std::strlen((const char *)in_value)+1);
             client_err_print(status);
-        }
+//        }
 
         /* 確認 
         status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
@@ -395,7 +421,8 @@ int main(){
             count+=bytes;
         }while(count < 256);
 
-        
+        // stashに格納する
+
         status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
                 (const unsigned char *)st[0].key, enc_len);
         if (status != SUCCESS) {
@@ -431,10 +458,29 @@ int main(){
         }
         if (std::strncmp((char*)key1, "dummy_", 6) != 0) {
             stash.push_back(st[1]);
-            std::cout << "key(" << key1 << "), value(";
+            std::cout << "key(" << key1 << ")" << std::endl;
         }
+        time_t end_insertion = clock();
+        sum_insertion += (end_insertion - start_insertion);
         
+        time_t end_all = clock();
+        sum_all += (end_all - start_all);
+
+        loop_cnt++;
     }
+
+    double average_insertion = ((double)sum_insertion / (double)loop_cnt) / CLOCKS_PER_SEC;
+    double average_volume = ((double)sum_volume / (double)loop_cnt) / CLOCKS_PER_SEC;
+    double average_all = ((double)sum_all / (double)loop_cnt) / CLOCKS_PER_SEC;
+
+    ofs << "ボリューム更新の平均処理時間: ";
+    ofs << std::to_string(average_volume) << std::endl;
+
+    ofs << "挿入の平均処理時間: ";
+    ofs << std::to_string(average_insertion) << std::endl;
+
+    ofs << "全体の平均処理時間: ";
+    ofs << std::to_string(average_all) << std::endl;
 
 
     //ソケットクローズ

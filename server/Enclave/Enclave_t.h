@@ -19,7 +19,7 @@ extern "C" {
 #define _keyvalue
 typedef struct keyvalue {
 	unsigned char key[256];
-	unsigned char value[10][256];
+	unsigned char value[256];
 } keyvalue;
 #endif
 
