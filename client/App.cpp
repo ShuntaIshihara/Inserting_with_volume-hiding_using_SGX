@@ -10,7 +10,8 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
-#include <time.h>
+#include <sys/time.h>
+//#include <time.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
@@ -56,9 +57,9 @@ int main(int argc, char *argv[]){
         std::cout << "ファイルが開けませんでした。" << std::endl;
         return 1;
     }
-    long sum_volume = 0;
-    long sum_insertion = 0;
-    long sum_all = 0;
+    unsigned long sum_volume = 0;
+    unsigned long sum_insertion = 0;
+    unsigned long sum_all = 0;
 
 
 
@@ -75,8 +76,8 @@ int main(int argc, char *argv[]){
 	memset(&addr, 0, sizeof(struct sockaddr_in)); //memsetで初期化
 	addr.sin_family = AF_INET; //アドレスファミリ(ipv4)
 	addr.sin_port = htons(8080); //ポート番号,htons()関数は16bitホストバイトオーダーをネットワークバイトオーダーに変換
-//    addr.sin_addr.s_addr = inet_addr("40.65.118.71"); //IPアドレス,inet_addr()関数はアドレスの翻訳
-    addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+    addr.sin_addr.s_addr = inet_addr("40.65.118.71"); //IPアドレス,inet_addr()関数はアドレスの翻訳
+//    addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 
 	//ソケット接続要求
 	connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)); //ソケット, アドレスポインタ, アドレスサイズ
@@ -212,7 +213,10 @@ int main(int argc, char *argv[]){
     int cnt = 0;
     int loop_cnt = 0;
     while(std::cin >> line) {
-        time_t start_all = clock();
+        std::cout << "start" << std::endl;
+        struct timespec start_all, end_all;
+        clock_gettime(CLOCK_REALTIME, &start_all);
+        //start_all = time(NULL);
 
         int flag = 0;
         if (line == "quit" || line == "q") {
@@ -223,8 +227,9 @@ int main(int argc, char *argv[]){
             break;
         }
 
-        time_t start_volume = clock();
-        
+        struct timespec start_volume, end_volume;
+        clock_gettime(CLOCK_REALTIME, &start_volume);
+
         //新しいキーであれば、キーリストに追加
         if (n_list.find(line) == n_list.end()) {
             n_list[line] = cnt;
@@ -309,9 +314,6 @@ int main(int argc, char *argv[]){
 
         send(sockfd, &bf_size, sizeof(int), 0);
         send(sockfd, buffer, bf_size, 0);
-        time_t end_volume = clock();
-        sum_volume += (end_volume - start_volume);
-
         cnt_list.clear();
 
         //結果を受け取る
@@ -353,8 +355,11 @@ int main(int argc, char *argv[]){
             dec = paillier_dec(NULL, pubKey, secKey, ctxt);
             index = mpz_get_si((mpz_srcptr)dec);
         }
+        clock_gettime(CLOCK_REALTIME, &end_volume);
+        sum_volume += (end_volume.tv_sec - start_volume.tv_sec);
 
-        time_t start_insertion = clock();
+        struct timespec start_insertion, end_insertion;
+        clock_gettime(CLOCK_REALTIME, &start_insertion);
 
         struct keyvalue data;
         size_t enc_len = 256;
@@ -460,26 +465,34 @@ int main(int argc, char *argv[]){
             stash.push_back(st[1]);
             std::cout << "key(" << key1 << ")" << std::endl;
         }
-        time_t end_insertion = clock();
-        sum_insertion += (end_insertion - start_insertion);
+        clock_gettime(CLOCK_REALTIME, &end_insertion);
+        sum_insertion += (end_insertion.tv_nsec - start_insertion.tv_nsec);
         
-        time_t end_all = clock();
-        sum_all += (end_all - start_all);
+        clock_gettime(CLOCK_REALTIME, &end_all);
+        //end_all = time(NULL);
+        sum_all += (end_all.tv_sec - start_all.tv_sec);
+
+        if (loop_cnt == 0) {
+            sum_all = 0;
+            sum_insertion = 0;
+            sum_volume = 0;
+        }
 
         loop_cnt++;
+        std::cout << "end" << std::endl;
     }
 
-    double average_insertion = ((double)sum_insertion / (double)loop_cnt) / CLOCKS_PER_SEC;
-    double average_volume = ((double)sum_volume / (double)loop_cnt) / CLOCKS_PER_SEC;
-    double average_all = ((double)sum_all / (double)loop_cnt) / CLOCKS_PER_SEC;
+    double average_insertion = ((double)sum_insertion / ((double)loop_cnt-1)) / 1000000;
+    double average_volume = ((double)sum_volume / ((double)loop_cnt-1));
+    double average_all = ((double)sum_all / ((double)loop_cnt-1));
 
-    ofs << "ボリューム更新の平均処理時間: ";
+    ofs << "ボリューム更新の平均処理時間(ms): ";
     ofs << std::to_string(average_volume) << std::endl;
 
-    ofs << "挿入の平均処理時間: ";
+    ofs << "挿入の平均処理時間(ms): ";
     ofs << std::to_string(average_insertion) << std::endl;
 
-    ofs << "全体の平均処理時間: ";
+    ofs << "全体の平均処理時間(s): ";
     ofs << std::to_string(average_all) << std::endl;
 
 
