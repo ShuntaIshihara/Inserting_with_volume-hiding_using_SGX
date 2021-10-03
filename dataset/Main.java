@@ -19,28 +19,32 @@ class Main {
             System.err.println("You need to set two comandline arguments.");
             return;
         }
-        int n = Integer.parseInt(args[0]) * 10000;
+        int n = Integer.parseInt(args[0]);
         Random rnd = new Random();
-        String filename = args[1];
+        String filename1 = args[1];
+        String filename2 = "DP,LDP_" + filename1;
         System.out.println("now generating");
         String newline = System.lineSeparator();
         try {
-            FileWriter file = new FileWriter(filename, true);
-            PrintWriter pw = new PrintWriter(new BufferedWriter(file));
+            FileWriter file1 = new FileWriter(filename1, true);
+            PrintWriter pw1 = new PrintWriter(new BufferedWriter(file1));
+            FileWriter file2 = new FileWriter(filename2, true);
+            PrintWriter pw2 = new PrintWriter(new BufferedWriter(file2));
             int cnt = 0;
+            pw2.print(String.valueOf(n) + newline);
 
             for (int i = 0; i < n; i++) {
-                double gaus = rnd.nextGaussian()*(n/5) + (n/2);
+                double gaus = rnd.nextGaussian()*(100) + (500);
                 StringBuilder sb = new StringBuilder(1000);
                 int keyn = (int)Math.round(gaus);
                 if (keyn <= 0) keyn = 0;
-                if (keyn >= n) keyn = n;
+                if (keyn >= n) keyn = n-1;
+                pw2.print(String.valueOf(keyn) + newline);
                 String key = "key_" + Integer.toString(keyn) + newline;
                 sb.append(key);
-                for (int j = 0; j < 10; j++)
-                    sb.append(getRandomString() + newline);
+                sb.append(getRandomString() + newline);
 
-                pw.print(sb.toString());
+                pw1.print(sb.toString());
                 if (cnt == n/100) {
                     System.out.print("#");
                     cnt = 0;
@@ -49,7 +53,8 @@ class Main {
                 }
             }
             System.out.println();
-            pw.close();
+            pw1.close();
+            pw2.close();
         } catch(IOException e) {
             e.printStackTrace();
         }
