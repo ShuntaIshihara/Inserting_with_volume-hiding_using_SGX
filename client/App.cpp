@@ -374,34 +374,13 @@ int main(int argc, char *argv[]){
         client_err_print(status);        
 
 
-//        for (int i = 0; i < 10; ++i) {
-            std::cin >> line;
-            unsigned char *in_value = (unsigned char*)line.c_str();
-            status = client_rsa_encrypt_sha256((const void *)pub_key, 
-                    data.value, (size_t *)&size, in_value, std::strlen((const char *)in_value)+1);
-            client_err_print(status);
-//        }
+        std::cin >> line;
+        unsigned char *in_value = (unsigned char*)line.c_str();
+        status = client_rsa_encrypt_sha256((const void *)pub_key, 
+                data.value, (size_t *)&size, in_value, std::strlen((const char *)in_value)+1);
+        client_err_print(status);
 
-        /* 確認 
-        status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)data.key, enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
-
-        unsigned char check_key[dec_len];
-        status = client_rsa_decrypt_sha256(priv_key, check_key, &dec_len,
-                (const unsigned char *)data.key, enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
-        std::cout << check_key << std::endl;
-
-         確認 */
-
-                
+                        
         send(sockfd, &data, sizeof(struct keyvalue), 0); //送信
 
         //stash受信
@@ -466,7 +445,7 @@ int main(int argc, char *argv[]){
             std::cout << "key(" << key1 << ")" << std::endl;
         }
         clock_gettime(CLOCK_REALTIME, &end_insertion);
-        sum_insertion += (end_insertion.tv_nsec - start_insertion.tv_nsec);
+        sum_insertion += (end_insertion.tv_sec - start_insertion.tv_sec);
         
         clock_gettime(CLOCK_REALTIME, &end_all);
         //end_all = time(NULL);
@@ -482,7 +461,7 @@ int main(int argc, char *argv[]){
         std::cout << "end" << std::endl;
     }
 
-    double average_insertion = ((double)sum_insertion / ((double)loop_cnt-1)) / 1000000;
+    double average_insertion = ((double)sum_insertion / ((double)loop_cnt-1));
     double average_volume = ((double)sum_volume / ((double)loop_cnt-1));
     double average_all = ((double)sum_all / ((double)loop_cnt-1));
 
