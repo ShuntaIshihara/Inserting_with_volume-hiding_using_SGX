@@ -17,6 +17,7 @@ class Main {
     public static void main(String[] args) {
         if (args.length != 3) {
             System.err.println("You need to set two comandline arguments.");
+            System.err.println("% java Main [size] [filename] [key_size]");
             return;
         }
         int n = Integer.parseInt(args[0]);
@@ -25,6 +26,7 @@ class Main {
         String filename2 = "uni_" + args[1];
         String filename3 = "DPLDP_" + filename1;
         String filename4 = "DPLDP_" + filename2;
+        String filename5 = "key_list.txt";
         int key_size = Integer.parseInt(args[2]);
         System.out.println("now generating");
         String newline = System.lineSeparator();
@@ -37,9 +39,16 @@ class Main {
             PrintWriter pw_u1  = new PrintWriter(new BufferedWriter(file_u1));
             FileWriter file_u2 = new FileWriter(filename4, true);
             PrintWriter pw_u2  = new PrintWriter(new BufferedWriter(file_u2));
+            FileWriter file    = new FileWriter(filename5, true);
+            PrintWriter keylist = new PrintWriter(new BufferedWriter(file));
             int cnt = 0;
             pw_g2.print(String.valueOf(key_size) + newline);
             pw_u2.print(String.valueOf(key_size) + newline);
+
+            for (int i = 0; i < key_size; i++) {
+                String key = "key_" + Integer.toString(i);
+                keylist.print(key);
+            }
 
             for (int i = 0; i < n; i++) {
                 double gaus = rnd.nextGaussian()*(key_size/10) + (key_size/2);
