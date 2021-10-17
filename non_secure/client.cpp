@@ -12,12 +12,7 @@
 #include <unordered_map>
 #include <sys/time.h>
 //#include <time.h>
-#include <cereal/cereal.hpp>
-#include <cereal/types/memory.hpp>
-#include <cereal/types/vector.hpp>
-#include <cereal/archives/portable_binary.hpp>
 #include "structure.hpp"
-#include "define.h"
 
 
 std::vector<struct keyvalue> stash;
@@ -38,8 +33,8 @@ int main(int argc, char *argv[]){
 	memset(&addr, 0, sizeof(struct sockaddr_in)); //memsetで初期化
 	addr.sin_family = AF_INET; //アドレスファミリ(ipv4)
 	addr.sin_port = htons(8080); //ポート番号,htons()関数は16bitホストバイトオーダーをネットワークバイトオーダーに変換
-    addr.sin_addr.s_addr = inet_addr("40.65.118.71"); //IPアドレス,inet_addr()関数はアドレスの翻訳
-//    addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+//    addr.sin_addr.s_addr = inet_addr("40.65.118.71"); //IPアドレス,inet_addr()関数はアドレスの翻訳
+    addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 
 	//ソケット接続要求
 	connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)); //ソケット, アドレスポインタ, アドレスサイズ
@@ -62,7 +57,8 @@ int main(int argc, char *argv[]){
         }
 
         std::string key = line;
-
+        int key_len = key.length()+1;
+        send(sockfd, &key_len, sizeof(int), 0);
         send(sockfd, (char*)key.c_str(), key.length()+1, 0);
 
         //更新したカウントを受け取る
@@ -81,44 +77,31 @@ int main(int argc, char *argv[]){
         std::stringstream iss;
         iss << index;
         key = key + "," + iss.str();
-        data.key = key.c_str();
+        std::strcpy(data.key, (char *)key.c_str());
 
         std::cin >> line;
-        data.value = line.c_str();
+        std::strcpy(data.value, (char *)line.c_str());
 
         send(sockfd, &data, sizeof(struct keyvalue), 0);
 
 
         //stashに格納する処理
-        struct keyvalue st[2];
-
         count = 0;
+        struct keyvalue st;
         do {
-            bytes = recv(sockfd, &st[0] + count, sizeof(struct keyvalue) - count, 0);
+            bytes = recv(sockfd, &st + count, sizeof(struct keyvalue) - count, 0);
             if (bytes < 0) {
-                std::cerr << "Error recv st[0]" << std::endl;
+                std::cerr << "Error recv stash." << std::endl;
                 return 1;
             }
         }while(count < sizeof(struct keyvalue));
 
-        count = 0;
-        do {
-            bytes = recv(sockfd, &st[1] + count, sizeof(struct keyvalue) - count, 0);
-            if (bytes < 0) {
-                std::cerr << "Error recv st[1]" << std::endl;
-                return 1;
-            }
-        }while(count < sizeof(struct keyvalue));
 
-        if (std::strncmp(st[0].key, (char*)"key_", 4) == 0) {
-            stash.push_back(st[0]);
-            std::cout << "stash = key(" << st[0].key << ")" << std::endl;
+        if (std::strncmp(st.key, (char*)"key_", 4) == 0) {
+            stash.push_back(st);
+            std::cout << "stash = key(" << st.key << ")" << std::endl;
         }
 
-        if (std::strncmp(st[1].key, (char*)"key_", 4) == 0) {
-            stash.push_back(st[1]);
-            std::cout << "stash = key(" << st[1].key << ")" << std::endl;
-        }
         
     }
     //ソケットクローズ
