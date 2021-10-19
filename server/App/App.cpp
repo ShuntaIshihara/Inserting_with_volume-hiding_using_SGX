@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <unordered_map>
-#include <time.h>
+#include <chrono>
 #include <sys/socket.h> //アドレスドメイン
 #include <sys/types.h> //ソケットタイプ
 #include <arpa/inet.h> //バイトオーダの変換に利用
@@ -224,17 +224,12 @@ void table_init(struct keyvalue *table)
     }
 }
 
-void acpy(unsigned char cpy[], char data[])
-{
-    for (int i = 0; i < 256; ++i) {
-        cpy[i] = data[i];
-    }
-}
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
-        std::cerr << "you need to set commandline arguments." << std::endl;
+    if (argc != 4) {
+        std::cerr << "Command line arguments are not enough." << std::endl;
+        std::cerr << "$> ./app [time_result_outputfile] [key_list_file] [key_size]" << std::endl;
         return 1;
     }
 
@@ -244,8 +239,9 @@ int main(int argc, char *argv[])
         std::cout << "ファイルが開けませんでした。" << std::endl;
         return 1;
     }
-    long sum_insertion = 0;
-    long sum_volume = 0;
+    auto sum = 0;
+    auto sum_c = 0;
+    auto sum_t = 0;
 
     
 
@@ -359,6 +355,7 @@ int main(int argc, char *argv[])
     //受信
     int cnt = 0;
     while (1) {
+        auto start = std::chrono::system_clock::now();
         int count = 0;
         int bytes;
         int flag;
@@ -405,7 +402,7 @@ int main(int argc, char *argv[])
 
         std::vector<cnt_data> send_list;
 
-        time_t start_volume = clock();
+        auto start_c = std::chrono::system_clock::now();
         for (int j = 0; j < cnt_list.size(); ++j) {
             if(indices.find(cnt_list[j].h) == indices.end()) {
                 index++;
@@ -451,8 +448,7 @@ int main(int argc, char *argv[])
 
 
         }
-        time_t end_volume = clock();
-        sum_volume += (end_volume - start_volume);
+        auto end_c = std::chrono::system_clock::now();
 
         std::stringstream ss;
         {
@@ -477,6 +473,7 @@ int main(int argc, char *argv[])
             count += bytes;
         }while(count < sizeof(struct keyvalue));
 
+        auto start_t = std::chrono::system_clock::now();
         unsigned char check_data[256];
         status = ecall_decrypt(global_eid, check_data, data.key);
         std::cout << check_data << std::endl;
@@ -497,12 +494,12 @@ int main(int argc, char *argv[])
 
             return -1;
         }
-        clock_t end_insertion = clock();
-        sum_insertion += (end_insertion - start_insertion);
+        auto end_t = std::chrono::system_clock::now();
 
         //stash送信
         send(connect, &stash[0], sizeof(struct keyvalue), 0); //送信
         send(connect, &stash[1], sizeof(struct keyvalue), 0);
+        auto end = std::chrono::system_clock::now();
 
 //        unsigned char dec[256];
 //        std::cout << "T1 = {";
@@ -521,17 +518,25 @@ int main(int argc, char *argv[])
 //        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+TABLE_SIZE-1].key);
 //        std::cout << dec << "}" << std::endl;
 
+        sum += std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+        sum_c += std::chrono::duration_cast<std::chrono::microseconds>(end_c-start_c).count();
+        sum_t += std::chrono::duration_cast<std::chrono::microseconds>(end_t-start_t).count();
+
         cnt++;
     }
 
-    double average_insertion = ((double)sum_insertion / (double)cnt) / CLOCKS_PER_SEC;
-    double average_volume = ((double)sum_volume / (double)cnt) / CLOCKS_PER_SEC;
+    double ave = (double)sum / cnt;
+    double ave_c = (double)sum_c / cnt;
+    double ave_t = (double)sum_t / cnt;
 
     ofs << "ボリューム更新の平均CPU使用時間: ";
-    ofs << std::to_string(average_volume) << std::endl;
+    ofs << std::to_string(ave_c) << std::endl;
 
     ofs << "挿入の平均CPU使用時間: ";
-    ofs << std::to_string(average_insertion) << std::endl;
+    ofs << std::to_string(ave_t) << std::endl;
+
+    ofs << "全体の処理時間: ";
+    ofs << std::to_string(ave) << std::endl;
 
     free(table);
 

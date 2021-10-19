@@ -10,8 +10,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
-#include <sys/time.h>
-//#include <time.h>
+#include <chrono>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
@@ -47,7 +46,7 @@ std::vector<struct keyvalue> stash;
 
 int main(int argc, char *argv[]){
     if (argc != 2) {
-        std::cerr << "you need to set commandline arguments." << std::endl;
+        std::cerr << "Command line arguments are not enough." << std::endl;
         return 1;
     }
 
@@ -57,9 +56,9 @@ int main(int argc, char *argv[]){
         std::cout << "ファイルが開けませんでした。" << std::endl;
         return 1;
     }
-    unsigned long sum_volume = 0;
-    unsigned long sum_insertion = 0;
-    unsigned long sum_all = 0;
+    auto sum = 0;
+    auto sum_c = 0;
+    auto sum_t = 0;
 
 
 
@@ -202,7 +201,7 @@ int main(int argc, char *argv[]){
     paillier_prvkey_t* secKey = paillier_prvkey_from_hex(&hexSecKey[0], pubKey);
 
     //キー -> キー番号　リストの宣言と初期化
-    std::unordered_map<std::string, int> n_list;
+    std::unordered_map<std::string, int> id_list;
 
     //キー番号 -> キー　リストの宣言と初期化
     std::vector<std::string> key_list;
@@ -213,9 +212,7 @@ int main(int argc, char *argv[]){
     int cnt = 0;
     int loop_cnt = 0;
     while(std::cin >> line) {
-        std::cout << "start" << std::endl;
-        struct timespec start_all, end_all;
-        clock_gettime(CLOCK_REALTIME, &start_all);
+        auto start = std::chrono::system_clock::now();
         //start_all = time(NULL);
 
         int flag = 0;
@@ -227,12 +224,9 @@ int main(int argc, char *argv[]){
             break;
         }
 
-        struct timespec start_volume, end_volume;
-        clock_gettime(CLOCK_REALTIME, &start_volume);
-
         //新しいキーであれば、キーリストに追加
-        if (n_list.find(line) == n_list.end()) {
-            n_list[line] = cnt;
+        if (id_list.find(line) == id_list.end()) {
+            id_list[line] = cnt;
             key_list.push_back(line);
             cnt++;
         }
@@ -243,8 +237,10 @@ int main(int argc, char *argv[]){
         //key
         std::string key = line;
 
+        auto start_c = std::chrono::system_clock::now();
+
         //randomized response
-        std::vector<int> keys = randomized_response(0.5, n_list[line], n_list.size());
+        std::vector<int> keys = randomized_response(0.5, id_list[line], id_list.size());
 
         //サーバーに送るキーのリスト
         std::vector<cnt_data> cnt_list;
@@ -274,7 +270,7 @@ int main(int argc, char *argv[]){
         keys.clear();
 
         //0を送るキーを選ぶ
-        std::vector<int> keys0 = select_0(0.5, n_list.size());
+        std::vector<int> keys0 = select_0(0.5, id_list.size());
 
         //byteEncryptedZeroを生成
         paillier_plaintext_t* m0 = paillier_plaintext_from_ui(0);
@@ -355,12 +351,9 @@ int main(int argc, char *argv[]){
             dec = paillier_dec(NULL, pubKey, secKey, ctxt);
             index = mpz_get_si((mpz_srcptr)dec);
         }
-        clock_gettime(CLOCK_REALTIME, &end_volume);
-        sum_volume += (end_volume.tv_sec - start_volume.tv_sec);
+        auto end_c = std::chrono::system_clock::now();
 
-        struct timespec start_insertion, end_insertion;
-        clock_gettime(CLOCK_REALTIME, &start_insertion);
-
+        auto start_t = std::chrono::system_clock::now();
         struct keyvalue data;
         size_t enc_len = 256;
         size_t dec_len = 0;
@@ -444,17 +437,14 @@ int main(int argc, char *argv[]){
             stash.push_back(st[1]);
             std::cout << "key(" << key1 << ")" << std::endl;
         }
-        clock_gettime(CLOCK_REALTIME, &end_insertion);
-        sum_insertion += (end_insertion.tv_sec - start_insertion.tv_sec);
-        
-        clock_gettime(CLOCK_REALTIME, &end_all);
+        auto end_t = std::chrono::system_clock::now(); 
+        auto end = std::chrono::system_clock::now();
         //end_all = time(NULL);
-        sum_all += (end_all.tv_sec - start_all.tv_sec);
 
-        if (loop_cnt == 0) {
-            sum_all = 0;
-            sum_insertion = 0;
-            sum_volume = 0;
+        if (loop_cnt != 0) {
+            sum += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+            sum_c += std::chrono::duration_cast<std::chrono::milliseconds>(end_c-start_t).count();
+            sum_t += std::chrono::duration_cast<std::chrono::milliseconds>(end_t-start_t).count();
         }
 
         loop_cnt++;
