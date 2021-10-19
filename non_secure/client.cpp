@@ -10,15 +10,19 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
-#include <sys/time.h>
-//#include <time.h>
+//#include <sys/time.h>
+#include <chrono>
 #include "structure.hpp"
 
 
 std::vector<struct keyvalue> stash;
 
-int main(){
-
+int main(int argc, char *argv[]){
+    if (argc < 2) {
+        std::cerr << "Command line arguments are not enough." << std::endl;
+        std::cerr << "$> ./client [output_filename] < [dataset_filename]" << std::endl;
+        std::exit(1);
+    }
 
 	//ソケットの生成
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0); //アドレスドメイン, ソケットタイプ, プロトコル
@@ -39,13 +43,17 @@ int main(){
 	//ソケット接続要求
 	connect(sockfd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)); //ソケット, アドレスポインタ, アドレスサイズ
 
+    auto sum = 0;
+    auto sum_cnt = 0;
+    auto sum_data = 0;
+    int cnt = 0;
 
     //データの挿入操作
     std::string line;
 //    int id = 0;
 //    int cnt = 0;
     while(std::cin >> line) {
-        std::cout << "start" << std::endl;
+        auto start = std::chrono::system_clock::now();
 
         int flag = 0;
         if (line == "quit" || line == "q") {
@@ -58,6 +66,7 @@ int main(){
 
         std::string key = line;
         int key_len = key.length()+1;
+        auto lcstart = std::chrono::system_clock::now();
         send(sockfd, &key_len, sizeof(int), 0);
         send(sockfd, (char*)key.c_str(), key.length()+1, 0);
 
@@ -73,6 +82,8 @@ int main(){
             }
             count += bytes;
         }while(count < (int)sizeof(int));
+        auto lcend = std::chrono::system_clock::now();
+
 
         struct keyvalue data;
         std::stringstream iss;
@@ -83,6 +94,7 @@ int main(){
         std::cin >> line;
         std::strcpy(data.value, (char *)line.c_str());
 
+        auto ldstart = std::chrono::system_clock::now();
         send(sockfd, &data, sizeof(struct keyvalue), 0);
 
 
@@ -97,6 +109,7 @@ int main(){
             }
             count += bytes;
         }while(count < (int)sizeof(struct keyvalue));
+        auto ldend = std::chrono::system_clock::now();
 
 
         if (std::strncmp(st.key, (char*)"key_", 4) == 0) {
@@ -105,7 +118,30 @@ int main(){
         }
 
         
+        auto end = std::chrono::system_clock::now();
+        if (cnt != 0) {
+            sum += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+            sum_cnt = std::chrono::duration_cast<std::chrono::microseconds>(lcend - lcstart).count();
+            sum_data = std::chrono::duration_cast<std::chrono::microseconds>(ldend - ldstart).count();
+
+        }
+        cnt++;
     }
     //ソケットクローズ
     close(sockfd);
+
+    double ave = (double)sum / (cnt-1);
+    double lcave = (double)sum_cnt / (cnt-1);
+    double ldave = (double)sum_data / (cnt-1);
+
+    std::ofstream f;
+    std::string filename = argv[1];
+    f.open(filename, std::ios::out);
+    f << "Communication time (for updating count_table): " << lcave << " micro s" << std::endl;
+    f << "Communication time (for updating cuckoo_hashing): " << ldave << " micro s" << std::endl;
+    f << "Total average: " << ave << " micro s" << std::endl;
+
+    f.close();
+    
+    return 0;
 }

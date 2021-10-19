@@ -18,4 +18,4 @@ client: client.cpp
 
 .PHONY: clean
 clean:
-	rm client server *.o
+	rm client server 
