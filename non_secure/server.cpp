@@ -8,14 +8,14 @@
 #include <assert.h>
 #include <vector>
 #include <unordered_map>
-#include <time.h>
+#include <chrono>
 #include <sys/socket.h> //アドレスドメイン
 #include <sys/types.h> //ソケットタイプ
 #include <arpa/inet.h> //バイトオーダの変換に利用
 #include <unistd.h> //close()に利用
 #include "structure.hpp"
 
-#define TABLE_SIZE 100000
+#define TABLE_SIZE 100003
 
 
 void init_table(struct keyvalue *table, int size);
@@ -25,9 +25,9 @@ struct keyvalue insert(struct keyvalue data, struct keyvalue *table, int size);
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3) {
-        std::cerr << "you need 3 commandline arguments." << std::endl; 
-        std::cerr << "% server [keylist file] [key size]" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Command line arguments are not enough." << std::endl; 
+        std::cerr << "$> ./server [timeresult_file] [keylist_file] [key_size]" << std::endl;
         return EXIT_FAILURE;
     }
     //ソケットの生成
@@ -69,18 +69,15 @@ int main(int argc, char *argv[])
 		std::cout << "Error accept:" << std::strerror(errno); //標準出力
 		exit(1); //異常終了
 	}
-    std::cout << "check point_2" << std::endl;
 
 
     //tableの宣言と初期化
     keyvalue *table = (struct keyvalue *)std::malloc(sizeof(struct keyvalue)*2*TABLE_SIZE);
-    std::cout << "check point_6" << std::endl;
     init_table(table, TABLE_SIZE);
-    std::cout << "check point_3" << std::endl;
 
     //ifstrem declaration
-    std::string klfile = argv[1];
-    int key_size = std::atoi(argv[2]);
+    std::string klfile = argv[2];
+    int key_size = std::atoi(argv[3]);
 
     //indices, cnt_table declaration
     std::unordered_map<std::string, int> indices;
@@ -88,9 +85,13 @@ int main(int argc, char *argv[])
 
     init_cnt(klfile, indices, cnt_table);
 
-    std::cout << "check point_4" << std::endl;
+    auto sum = 0;
+    auto sum_c = 0;
+    auto sum_t = 0;
+    int cnt = 0;
 
     while (true) {
+        auto start = std::chrono::system_clock::now();
         int flag;
         int count = 0;
         int bytes;
@@ -103,7 +104,6 @@ int main(int argc, char *argv[])
             count += bytes;
         }while(count < (int)sizeof(int));
         if (flag) break;
-        std::cout << "check point_7" << std::endl;
 
         count = 0;
         int key_len;
@@ -115,7 +115,6 @@ int main(int argc, char *argv[])
             }
             count += bytes;
         }while(count < (int)sizeof(int));
-        std::cout << "check point_8" << std::endl;
 
         count = 0;
         char keybf[256];
@@ -127,18 +126,17 @@ int main(int argc, char *argv[])
             }
             count += bytes;
         }while(count < key_len);
-        std::cout << "check point_9" << std::endl;
 
         std::string key = keybf;
 
         //update count table
+        auto start_c = std::chrono::system_clock::now();
         cnt_table[indices[key]] += 1;
+        auto end_c = std::chrono::system_clock::now();
 
-        std::cout << "check point_1" << std::endl;
 
         int index = cnt_table[indices[key]];
         send(connect, &index, sizeof(int), 0);
-        std::cout << "check point_10" << std::endl;
 
 
         count = 0;
@@ -151,15 +149,16 @@ int main(int argc, char *argv[])
             }
             count += bytes;
         }while(count < (int)sizeof(struct keyvalue));
-        std::cout << "check point_11" << std::endl;
 
         struct keyvalue stash;
+        auto start_t = std::chrono::system_clock::now();
         stash = insert(data, table, TABLE_SIZE);
-        std::cout << "check point_13" << std::endl;
+        auto end_t = std::chrono::system_clock::now();
 
         send(connect, &stash, sizeof(struct keyvalue), 0);
-        std::cout << "check point_12" << std::endl;
 
+        auto end = std::chrono::system_clock::now();
+/*
         std::cout << "T1 = {";
         for (int i = 0; i < TABLE_SIZE-1; ++i) {
             std::cout << table[i].key << ", ";
@@ -171,9 +170,31 @@ int main(int argc, char *argv[])
             std::cout << table[TABLE_SIZE + i].key << ", ";
         }
         std::cout << table[TABLE_SIZE*2-1].key << "}" << std::endl;
+*/
+
+        if (cnt != 0) {
+            sum += std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+            sum_c += std::chrono::duration_cast<std::chrono::microseconds>(end_c-start_c).count();
+            sum_t += std::chrono::duration_cast<std::chrono::microseconds>(end_t-start_t).count();
+        }
+        cnt++;
     }
 
     free(table);
     close(connect);
 
+    double ave = (double)sum / (cnt-1);
+    double ave_c = (double)sum_c / (cnt-1);
+    double ave_t = (double)sum_t / (cnt-1);
+
+    std::ofstream f;
+    std::string filename = argv[1];
+    f.open(filename, std::ios::out);
+    f << "Processing time (for updating cnt_table): " << ave_c << " micro s" << std::endl;
+    f << "Processing time (for updating cuckoo hashing table): " << ave_t << "micro s" << std::endl;
+    f << "Total average: " << ave << " micro s" << std::endl;
+
+    f.close();
+
+    return 0;
 }
