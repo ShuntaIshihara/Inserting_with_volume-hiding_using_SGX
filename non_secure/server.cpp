@@ -25,9 +25,9 @@ struct keyvalue insert(struct keyvalue data, struct keyvalue *table, int size);
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4) {
+    if (argc != 3) {
         std::cerr << "Command line arguments are not enough." << std::endl; 
-        std::cerr << "$> ./server [timeresult_file] [keylist_file] [key_size]" << std::endl;
+        std::cerr << "$> ./server [timeresult_file] [keylist_file]" << std::endl;
         return EXIT_FAILURE;
     }
     //ソケットの生成
@@ -77,11 +77,10 @@ int main(int argc, char *argv[])
 
     //ifstrem declaration
     std::string klfile = argv[2];
-    int key_size = std::atoi(argv[3]);
 
     //indices, cnt_table declaration
     std::unordered_map<std::string, int> indices;
-    std::vector<int>  cnt_table(key_size);
+    std::vector<int>  cnt_table;
 
     init_cnt(klfile, indices, cnt_table);
 

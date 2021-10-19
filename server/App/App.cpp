@@ -224,14 +224,37 @@ void table_init(struct keyvalue *table)
     }
 }
 
+void init_cnt(std::string filename, std::unordered_map<std::string, int>& indices, std::vector<char*>& cnt_table, paillier_pubkey_t *pubKey)
+{
+    std::ifstream input_file(filename);
+    if (!input_file.is_open()) {
+        std::cerr << "Error: Could not open " << filename << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    std::string line;
+    int index = 0;
+    while (std::getline(input_file, line)) {
+        indices[line] = index;
+        index++;
+        paillier_plaintext_t* m = paillier_plaintext_from_ui(0);
+        paillier_ciphertext_t* ctxt;
+        ctxt = paillier_enc(NULL, pubKey, m, paillier_get_rand_devurandom);
+        cnt_table.push_back((char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt));
+    }
+
+    input_file.close();
+}
+
 
 int main(int argc, char *argv[])
 {
     if (argc != 4) {
         std::cerr << "Command line arguments are not enough." << std::endl;
-        std::cerr << "$> ./app [time_result_outputfile] [key_list_file] [key_size]" << std::endl;
+        std::cerr << "$> ./app [time_result_outputfile] [key_list_file]" << std::endl;
         return 1;
     }
+    std::string klfile = argv[2];
 
     std::ofstream ofs(argv[1]);
     if (!ofs)
@@ -342,13 +365,7 @@ int main(int argc, char *argv[])
     int index = 0;
     std::unordered_map<std::string, int> indices;    //hash_mapから配列の添字を読み込む
     std::vector<char*> cnt_table;                    //hash_mapから読み込んだ添字の場所に格納する
-    for (int i = 0; i < BLOCK_SIZE*TABLE_SIZE; ++i) {
-        paillier_plaintext_t* m = paillier_plaintext_from_ui(0);
-        paillier_ciphertext_t* ctxt;
-        ctxt = paillier_enc(NULL, pubKey, m, paillier_get_rand_devurandom);
-        cnt_table.push_back((char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt));
-    }
-
+    init_cnt(klfile, indices, cnt_table, pubKey);
 
 
 

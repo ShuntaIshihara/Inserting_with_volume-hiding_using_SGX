@@ -49,4 +49,5 @@ void init_cnt(std::string filename, std::unordered_map<std::string, int>& indice
         index++;
         cnt_table.push_back(0); 
     }
+    input_file.close();
 }
