@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
     keyvalue *table = (struct keyvalue *)std::malloc(sizeof(struct keyvalue)*2*TABLE_SIZE);
     std::cout << "check point_6" << std::endl;
     init_table(table, TABLE_SIZE);
-
     std::cout << "check point_3" << std::endl;
 
     //ifstrem declaration
@@ -91,8 +90,8 @@ int main(int argc, char *argv[])
 
     std::cout << "check point_4" << std::endl;
 
-    while (1) {
-        int flag = 1;
+    while (true) {
+        int flag;
         int count = 0;
         int bytes;
         do {
@@ -101,8 +100,10 @@ int main(int argc, char *argv[])
                 std::cerr << "Error recv flag." << std::endl;
                 return 1;
             }
-        }while(count < sizeof(int));
-        if (!flag) break;
+            count += bytes;
+        }while(count < (int)sizeof(int));
+        if (flag) break;
+        std::cout << "check point_7" << std::endl;
 
         count = 0;
         int key_len;
@@ -112,7 +113,9 @@ int main(int argc, char *argv[])
                 std::cerr << "Error recv key_len." << std::endl;
                 return 1;
             }
-        }while(count < sizeof(int));
+            count += bytes;
+        }while(count < (int)sizeof(int));
+        std::cout << "check point_8" << std::endl;
 
         count = 0;
         char keybf[256];
@@ -122,7 +125,9 @@ int main(int argc, char *argv[])
                 std::cerr << "Error recv keybf." << std::endl;
                 return 1;
             }
+            count += bytes;
         }while(count < key_len);
+        std::cout << "check point_9" << std::endl;
 
         std::string key = keybf;
 
@@ -133,6 +138,8 @@ int main(int argc, char *argv[])
 
         int index = cnt_table[indices[key]];
         send(connect, &index, sizeof(int), 0);
+        std::cout << "check point_10" << std::endl;
+
 
         count = 0;
         struct keyvalue data;
@@ -142,12 +149,16 @@ int main(int argc, char *argv[])
                 std::cerr << "Error recv data." << std::endl;
                 return 1;
             }
-        }while(count < sizeof(struct keyvalue));
+            count += bytes;
+        }while(count < (int)sizeof(struct keyvalue));
+        std::cout << "check point_11" << std::endl;
 
         struct keyvalue stash;
         stash = insert(data, table, TABLE_SIZE);
+        std::cout << "check point_13" << std::endl;
 
-        send(sockfd, &stash, sizeof(struct keyvalue), 0);
+        send(connect, &stash, sizeof(struct keyvalue), 0);
+        std::cout << "check point_12" << std::endl;
 
         std::cout << "T1 = {";
         for (int i = 0; i < TABLE_SIZE-1; ++i) {

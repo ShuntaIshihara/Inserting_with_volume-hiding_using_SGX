@@ -25,7 +25,7 @@
 #include <cereal/types/array.hpp>
 #include "structure.hpp"
 
-#define BLOCK_SIZE 100
+#define BLOCK_SIZE 1002
 #define TABLE_SIZE 997
 
 #include "paillier.h"
@@ -436,18 +436,18 @@ int main(int argc, char *argv[])
 
 
             // Decrypt the ciphertext (sum)
-            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+//            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
 
             paillier_freeciphertext(encryptedValue);
             paillier_freeciphertext(encryptedCnt);
             paillier_freeciphertext(encryptedSum);
             free(byteEncryptedSum);
 
-            paillier_plaintext_t* dec;
-            dec = paillier_dec(NULL, pubKey, secKey, ctxt);
-            std::cout << "cnt_table[" << indices[cnt_list[j].h] << "] = ";
-            gmp_printf("Decrypted value: %Zd\n", dec);
-            paillier_freeplaintext(dec);
+//            paillier_plaintext_t* dec;
+//            dec = paillier_dec(NULL, pubKey, secKey, ctxt);
+//            std::cout << "cnt_table[" << indices[cnt_list[j].h] << "] = ";
+//            gmp_printf("Decrypted value: %Zd\n", dec);
+//            paillier_freeplaintext(dec);
 
 
         }
@@ -504,22 +504,22 @@ int main(int argc, char *argv[])
         send(connect, &stash[0], sizeof(struct keyvalue), 0); //送信
         send(connect, &stash[1], sizeof(struct keyvalue), 0);
 
-        unsigned char dec[256];
-        std::cout << "T1 = {";
-        for (int i = 0; i < TABLE_SIZE - 1; i++) {
-            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE + i].key);
-            std::cout << dec << ", ";
-        }
-        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE-1].key);
-        std::cout << dec << "}" << std::endl;
-
-        std::cout << "T2 = {";
-        for (int i = 0; i < TABLE_SIZE - 1; i++) {
-            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+i].key);
-            std::cout << dec << ", ";
-        }
-        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+TABLE_SIZE-1].key);
-        std::cout << dec << "}" << std::endl;
+//        unsigned char dec[256];
+//        std::cout << "T1 = {";
+//        for (int i = 0; i < TABLE_SIZE - 1; i++) {
+//            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE + i].key);
+//            std::cout << dec << ", ";
+//        }
+//        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE-1].key);
+//        std::cout << dec << "}" << std::endl;
+//
+//        std::cout << "T2 = {";
+//        for (int i = 0; i < TABLE_SIZE - 1; i++) {
+//            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+i].key);
+//            std::cout << dec << ", ";
+//        }
+//        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+TABLE_SIZE-1].key);
+//        std::cout << dec << "}" << std::endl;
 
         cnt++;
     }
@@ -541,6 +541,7 @@ int main(int argc, char *argv[])
 
 	close(connect);
 	close(sockfd);
+    ofs.close();
 
 	/* Destruct the enclave */
 	sgx_destroy_enclave(global_eid);

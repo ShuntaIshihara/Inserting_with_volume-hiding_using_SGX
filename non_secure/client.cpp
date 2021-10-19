@@ -17,7 +17,7 @@
 
 std::vector<struct keyvalue> stash;
 
-int main(int argc, char *argv[]){
+int main(){
 
 
 	//ソケットの生成
@@ -42,8 +42,8 @@ int main(int argc, char *argv[]){
 
     //データの挿入操作
     std::string line;
-    int id = 0;
-    int cnt = 0;
+//    int id = 0;
+//    int cnt = 0;
     while(std::cin >> line) {
         std::cout << "start" << std::endl;
 
@@ -71,7 +71,8 @@ int main(int argc, char *argv[]){
                 std::cerr << "Error recv index." << std::endl;
                 return 1;
             }
-        }while(count < sizeof(int));
+            count += bytes;
+        }while(count < (int)sizeof(int));
 
         struct keyvalue data;
         std::stringstream iss;
@@ -94,7 +95,8 @@ int main(int argc, char *argv[]){
                 std::cerr << "Error recv stash." << std::endl;
                 return 1;
             }
-        }while(count < sizeof(struct keyvalue));
+            count += bytes;
+        }while(count < (int)sizeof(struct keyvalue));
 
 
         if (std::strncmp(st.key, (char*)"key_", 4) == 0) {
