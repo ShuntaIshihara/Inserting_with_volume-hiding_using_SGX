@@ -46,7 +46,7 @@ class Main {
             pw_u2.print(String.valueOf(key_size) + newline);
 
             for (int i = 0; i < key_size; i++) {
-                String key = "key_" + Integer.toString(i);
+                String key = "key_" + Integer.toString(i) + newline;
                 keylist.print(key);
             }
 
@@ -81,6 +81,7 @@ class Main {
             pw_g2.close();
             pw_u1.close();
             pw_u2.close();
+            keylist.close();
         } catch(IOException e) {
             e.printStackTrace();
         }
