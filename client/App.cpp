@@ -41,12 +41,14 @@ std::vector<int> randomized_response(double p, int key, int key_max);
 std::vector<int> select_0(double p, int key_max);
 std::string sha256(SHA256_CTX sha_ctx, std::string m);
 std::vector<cnt_data> deserialize(char buffer[], int size);
+void init(std::string filename, std::unordered_map<std::string, int>& id_list, std::vector<std::string>& key_list);
 
 std::vector<struct keyvalue> stash;
 
 int main(int argc, char *argv[]){
-    if (argc != 2) {
+    if (argc != 3) {
         std::cerr << "Command line arguments are not enough." << std::endl;
+        std::cerr << "$> ./app [time_result_file] [key_list_file] < [dataset_file]" << std::endl;
         return 1;
     }
 
@@ -56,6 +58,7 @@ int main(int argc, char *argv[]){
         std::cout << "ファイルが開けませんでした。" << std::endl;
         return 1;
     }
+    std::string klfile = argv[2];
     auto sum = 0;
     auto sum_c = 0;
     auto sum_t = 0;
@@ -205,6 +208,8 @@ int main(int argc, char *argv[]){
 
     //キー番号 -> キー　リストの宣言と初期化
     std::vector<std::string> key_list;
+
+    init(klfile, id_list, key_list);
 
 
     //データの挿入操作
@@ -443,7 +448,7 @@ int main(int argc, char *argv[]){
 
         if (loop_cnt != 0) {
             sum += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-            sum_c += std::chrono::duration_cast<std::chrono::milliseconds>(end_c-start_t).count();
+            sum_c += std::chrono::duration_cast<std::chrono::milliseconds>(end_c-start_c).count();
             sum_t += std::chrono::duration_cast<std::chrono::milliseconds>(end_t-start_t).count();
         }
 
@@ -451,9 +456,9 @@ int main(int argc, char *argv[]){
         std::cout << "end" << std::endl;
     }
 
-    double average_insertion = ((double)sum_insertion / ((double)loop_cnt-1));
-    double average_volume = ((double)sum_volume / ((double)loop_cnt-1));
-    double average_all = ((double)sum_all / ((double)loop_cnt-1));
+    double average_insertion = (double)sum_t / (loop_cnt-1);
+    double average_volume = (double)sum_c / (loop_cnt-1);
+    double average_all = (double)sum / (loop_cnt-1);
 
     ofs << "ボリューム更新の平均処理時間(ms): ";
     ofs << std::to_string(average_volume) << std::endl;
