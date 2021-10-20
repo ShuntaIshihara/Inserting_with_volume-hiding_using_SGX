@@ -36,7 +36,7 @@ int main(int argc, char *argv[]){
 	memset(&addr, 0, sizeof(struct sockaddr_in)); //memsetで初期化
 	addr.sin_family = AF_INET; //アドレスファミリ(ipv4)
 	addr.sin_port = htons(8080); //ポート番号,htons()関数は16bitホストバイトオーダーをネットワークバイトオーダーに変換
-//    addr.sin_addr.s_addr = inet_addr("40.65.118.71"); //IPアドレス,inet_addr()関数はアドレスの翻訳
+    addr.sin_addr.s_addr = inet_addr("40.65.118.71"); //IPアドレス,inet_addr()関数はアドレスの翻訳
     addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 
 	//ソケット接続要求

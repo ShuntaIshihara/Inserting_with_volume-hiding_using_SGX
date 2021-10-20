@@ -1,0 +1,3 @@
+Communication time (for updating count_table): 18.1111 micro s
+Communication time (for updating cuckoo_hashing): 13.8889 micro s
+Total average: 311.444 micro s
