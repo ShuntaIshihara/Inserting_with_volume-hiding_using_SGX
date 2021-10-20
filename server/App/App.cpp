@@ -25,7 +25,7 @@
 #include <cereal/types/array.hpp>
 #include "structure.hpp"
 
-#define BLOCK_SIZE 1002
+#define BLOCK_SIZE 101
 #define TABLE_SIZE 997
 
 #include "paillier.h"
@@ -249,7 +249,7 @@ void init_cnt(std::string filename, std::unordered_map<std::string, int>& indice
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4) {
+    if (argc != 3) {
         std::cerr << "Command line arguments are not enough." << std::endl;
         std::cerr << "$> ./app [time_result_outputfile] [key_list_file]" << std::endl;
         return 1;
