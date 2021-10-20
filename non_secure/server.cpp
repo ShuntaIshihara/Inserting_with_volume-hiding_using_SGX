@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
 
     while (true) {
         auto start = std::chrono::system_clock::now();
+        std::cout << "checkpoint1" << std::endl;
         int flag;
         int count = 0;
         int bytes;
@@ -103,6 +104,7 @@ int main(int argc, char *argv[])
             count += bytes;
         }while(count < (int)sizeof(int));
         if (flag) break;
+        std::cout << "checkpoint2" << std::endl;
 
         count = 0;
         int key_len;
@@ -114,6 +116,7 @@ int main(int argc, char *argv[])
             }
             count += bytes;
         }while(count < (int)sizeof(int));
+        std::cout << "checkpoint1" << std::endl;
 
         count = 0;
         char keybf[256];
@@ -130,12 +133,15 @@ int main(int argc, char *argv[])
 
         //update count table
         auto start_c = std::chrono::system_clock::now();
+        std::cout << "checkpoint3" << std::endl;
         cnt_table[indices[key]] += 1;
+        std::cout << "checkpoint4" << std::endl;
         auto end_c = std::chrono::system_clock::now();
 
 
         int index = cnt_table[indices[key]];
         send(connect, &index, sizeof(int), 0);
+        std::cout << "checkpoint5" << std::endl;
 
 
         count = 0;
@@ -148,13 +154,16 @@ int main(int argc, char *argv[])
             }
             count += bytes;
         }while(count < (int)sizeof(struct keyvalue));
+        std::cout << "checkpoint6" << std::endl;
 
         struct keyvalue stash;
         auto start_t = std::chrono::system_clock::now();
         stash = insert(data, table, TABLE_SIZE);
         auto end_t = std::chrono::system_clock::now();
+        std::cout << "checkpoint7" << std::endl;
 
         send(connect, &stash, sizeof(struct keyvalue), 0);
+        std::cout << "checkpoint8" << std::endl;
 
         auto end = std::chrono::system_clock::now();
 /*
@@ -176,6 +185,8 @@ int main(int argc, char *argv[])
             sum_c += std::chrono::duration_cast<std::chrono::microseconds>(end_c-start_c).count();
             sum_t += std::chrono::duration_cast<std::chrono::microseconds>(end_t-start_t).count();
         }
+        std::cout << "checkpoint9" << std::endl;
+
         cnt++;
     }
 
