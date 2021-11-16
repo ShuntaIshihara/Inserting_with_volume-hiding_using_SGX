@@ -15,7 +15,7 @@
 #include <unistd.h> //close()に利用
 #include "structure.hpp"
 
-#define TABLE_SIZE 100003
+#define TABLE_SIZE 1000003
 
 
 void init_table(struct keyvalue *table, int size);
@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
     auto sum_c = 0;
     auto sum_t = 0;
     int cnt = 0;
+    int total_bytes = 0;
 
     while (true) {
         auto start = std::chrono::system_clock::now();
@@ -103,6 +104,7 @@ int main(int argc, char *argv[])
             }
             count += bytes;
         }while(count < (int)sizeof(int));
+        total_bytes += bytes;
         if (flag) break;
 //        std::cout << "checkpoint2" << std::endl;
 
@@ -116,6 +118,8 @@ int main(int argc, char *argv[])
             }
             count += bytes;
         }while(count < (int)sizeof(int));
+        total_bytes += bytes;
+
 //        std::cout << "checkpoint1" << std::endl;
 
         count = 0;
@@ -128,6 +132,7 @@ int main(int argc, char *argv[])
             }
             count += bytes;
         }while(count < key_len);
+        total_bytes += bytes;
 
         std::string key = keybf;
 
@@ -141,6 +146,7 @@ int main(int argc, char *argv[])
 
         int index = cnt_table[indices[key]];
         send(connect, &index, sizeof(int), 0);
+        total_bytes += sizeof(int);
 //        std::cout << "checkpoint5" << std::endl;
 
 
@@ -154,6 +160,7 @@ int main(int argc, char *argv[])
             }
             count += bytes;
         }while(count < (int)sizeof(struct keyvalue));
+        total_bytes += bytes;
 //        std::cout << "checkpoint6" << std::endl;
 
         struct keyvalue stash;
@@ -163,6 +170,7 @@ int main(int argc, char *argv[])
 //        std::cout << "checkpoint7" << std::endl;
 
         send(connect, &stash, sizeof(struct keyvalue), 0);
+        total_bytes += sizeof(keyvalue);
 //        std::cout << "checkpoint8" << std::endl;
 
         auto end = std::chrono::system_clock::now();
@@ -196,6 +204,8 @@ int main(int argc, char *argv[])
     double ave = (double)sum / (cnt-1);
     double ave_c = (double)sum_c / (cnt-1);
     double ave_t = (double)sum_t / (cnt-1);
+    double ave_bytes = (double)total_bytes / cnt;
+    std::cout << ave_bytes << "bytes" << std::endl;
 
     std::ofstream f;
     std::string filename = argv[1];

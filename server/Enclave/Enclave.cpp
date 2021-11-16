@@ -240,11 +240,9 @@ struct keyvalue cuckoo(struct keyvalue *table, struct keyvalue data, int size, i
 void ecall_insertion_start(struct keyvalue *table, size_t table_size, struct keyvalue *data, int *size)
 {
 	struct keyvalue stash[2];
-    ocall_print("enclave check point 1");
 
     //新しいキーバリューデータを挿入し、托卵操作を行う
     stash[0] = cuckoo(table, *data, *size, 0, 0, 7);
-    ocall_print("enclave check point 2");
 
     //ランダムなキーバリューデータ（ダミーデータ）を生成
     struct keyvalue dummy;

@@ -482,7 +482,6 @@ int main(int argc, char *argv[])
         count = 0;
         do {
             bytes = recv(connect, &data + count, sizeof(struct keyvalue) - count, 0);
-            std::cout << bytes << std::endl;
             if (bytes < 0) {
                 std::cerr << "recv data error\n";
                 return 1;
@@ -493,14 +492,12 @@ int main(int argc, char *argv[])
         auto start_t = std::chrono::system_clock::now();
         unsigned char check_data[256];
         status = ecall_decrypt(global_eid, check_data, data.key);
-        std::cout << check_data << std::endl;
 
 
         //blockの振り分け
         int block;
         int block_size = BLOCK_SIZE;
         status = ecall_hash_block(global_eid, &block, data.key, &block_size);
-        std::cout << "block = " << block << std::endl;
 
 
         int table_size = TABLE_SIZE;
@@ -547,13 +544,13 @@ int main(int argc, char *argv[])
     double ave_t = (double)sum_t / cnt;
 
     ofs << "ボリューム更新の平均CPU使用時間: ";
-    ofs << std::to_string(ave_c) << std::endl;
+    ofs << std::to_string(ave_c) << "micro s" << std::endl;
 
     ofs << "挿入の平均CPU使用時間: ";
-    ofs << std::to_string(ave_t) << std::endl;
+    ofs << std::to_string(ave_t) << "micro s" << std::endl;
 
     ofs << "全体の処理時間: ";
-    ofs << std::to_string(ave) << std::endl;
+    ofs << std::to_string(ave) << "micor s" << std::endl;
 
     free(table);
 

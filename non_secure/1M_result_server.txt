@@ -1,0 +1,3 @@
+Processing time (for updating cnt_table): 2.22222 micro s
+Processing time (for updating cuckoo hashing table): 16.5556micro s
+Total average: 327484 micro s
