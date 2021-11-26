@@ -25,8 +25,8 @@
 #include <cereal/types/array.hpp>
 #include "structure.hpp"
 
-#define BLOCK_SIZE 101
-#define TABLE_SIZE 997
+#define BLOCK_SIZE 10
+#define TABLE_SIZE 10000
 
 #include "paillier.h"
 
@@ -36,9 +36,17 @@ std::string getPubKey(std::string filename);
 std::string getSecKey(std::string filename);
 std::vector<cnt_data> deserialize(char buffer[], int size);
 
+struct keyvalue *table;
 struct keyvalue stash[2];
 
 //OCALL implementation
+void ocall_return_table(struct keyvalue *t, size_t table_size, int *head, int *block)
+{
+    for (int i = 0; i < 2000; ++i) {
+        table[(*block)*2*TABLE_SIZE+(*head)+i] = t[i];
+    }
+}
+
 void ocall_return_stash(struct keyvalue st[2])
 {
     stash[0] = st[0];
@@ -339,7 +347,6 @@ int main(int argc, char *argv[])
 
     //Tableの初期化
 //    struct keyvalue table[BLOCK_SIZE][2][TABLE_SIZE];
-    struct keyvalue *table;
     table = (struct keyvalue *)malloc(sizeof(struct keyvalue)*BLOCK_SIZE*2*TABLE_SIZE);
     table_init(table);
 
@@ -502,10 +509,23 @@ int main(int argc, char *argv[])
 
         int table_size = TABLE_SIZE;
         clock_t start_insertion = clock();
-        status = ecall_insertion_start(global_eid, table+block*2*TABLE_SIZE, sizeof(struct keyvalue)*2*TABLE_SIZE, &data, &table_size);
+        status = ecall_table_malloc(global_eid);
         if (status != SGX_SUCCESS) {
             sgx_error_print(status);
-
+            return -1;
+        }
+        for (int i = 0; i < 10; ++i) {
+            int head = i*2000;
+            status = ecall_load(global_eid, table+block*2*TABLE_SIZE+(i*2000), sizeof(struct keyvalue)*2000, &head);
+            if (status != SGX_SUCCESS) {
+                sgx_error_print(status);
+                return -1;
+            }
+            std::cout << "checkpoint1" << std::endl;
+        }
+        status = ecall_insertion_start(global_eid, &data, &table_size, &block);
+        if (status != SGX_SUCCESS) {
+            sgx_error_print(status);
             return -1;
         }
         auto end_t = std::chrono::system_clock::now();
