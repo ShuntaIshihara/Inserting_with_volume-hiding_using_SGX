@@ -23,11 +23,16 @@ typedef struct ms_ecall_decrypt_t {
 	unsigned char* ms_enc;
 } ms_ecall_decrypt_t;
 
-typedef struct ms_ecall_insertion_start_t {
-	struct keyvalue* ms_table;
+typedef struct ms_ecall_load_t {
+	struct keyvalue* ms_t;
 	size_t ms_table_size;
+	int* ms_head;
+} ms_ecall_load_t;
+
+typedef struct ms_ecall_insertion_start_t {
 	struct keyvalue* ms_data;
 	int* ms_size;
+	int* ms_block;
 } ms_ecall_insertion_start_t;
 
 typedef struct ms_ecall_hash_block_t {
@@ -47,6 +52,13 @@ typedef struct ms_ocall_err_print_t {
 typedef struct ms_ocall_print_t {
 	const char* ms_str;
 } ms_ocall_print_t;
+
+typedef struct ms_ocall_return_table_t {
+	struct keyvalue* ms_t;
+	size_t ms_table_size;
+	int* ms_block;
+	int* ms_head;
+} ms_ocall_return_table_t;
 
 typedef struct ms_ocall_return_stash_t {
 	struct keyvalue* ms_stash;
@@ -80,6 +92,14 @@ static sgx_status_t SGX_CDECL Enclave_ocall_print(void* pms)
 	return SGX_SUCCESS;
 }
 
+static sgx_status_t SGX_CDECL Enclave_ocall_return_table(void* pms)
+{
+	ms_ocall_return_table_t* ms = SGX_CAST(ms_ocall_return_table_t*, pms);
+	ocall_return_table(ms->ms_t, ms->ms_table_size, ms->ms_block, ms->ms_head);
+
+	return SGX_SUCCESS;
+}
+
 static sgx_status_t SGX_CDECL Enclave_ocall_return_stash(void* pms)
 {
 	ms_ocall_return_stash_t* ms = SGX_CAST(ms_ocall_return_stash_t*, pms);
@@ -98,13 +118,14 @@ static sgx_status_t SGX_CDECL Enclave_ocall_print_e(void* pms)
 
 static const struct {
 	size_t nr_ocall;
-	void * table[5];
+	void * table[6];
 } ocall_table_Enclave = {
-	5,
+	6,
 	{
 		(void*)Enclave_ocall_err_different_size,
 		(void*)Enclave_ocall_err_print,
 		(void*)Enclave_ocall_print,
+		(void*)Enclave_ocall_return_table,
 		(void*)Enclave_ocall_return_stash,
 		(void*)Enclave_ocall_print_e,
 	}
@@ -146,15 +167,32 @@ sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, unsigned char dec[256], unsigne
 	return status;
 }
 
-sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue* table, size_t table_size, struct keyvalue* data, int* size)
+sgx_status_t ecall_table_malloc(sgx_enclave_id_t eid)
+{
+	sgx_status_t status;
+	status = sgx_ecall(eid, 3, &ocall_table_Enclave, NULL);
+	return status;
+}
+
+sgx_status_t ecall_load(sgx_enclave_id_t eid, struct keyvalue* t, size_t table_size, int* head)
+{
+	sgx_status_t status;
+	ms_ecall_load_t ms;
+	ms.ms_t = t;
+	ms.ms_table_size = table_size;
+	ms.ms_head = head;
+	status = sgx_ecall(eid, 4, &ocall_table_Enclave, &ms);
+	return status;
+}
+
+sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue* data, int* size, int* block)
 {
 	sgx_status_t status;
 	ms_ecall_insertion_start_t ms;
-	ms.ms_table = table;
-	ms.ms_table_size = table_size;
 	ms.ms_data = data;
 	ms.ms_size = size;
-	status = sgx_ecall(eid, 3, &ocall_table_Enclave, &ms);
+	ms.ms_block = block;
+	status = sgx_ecall(eid, 5, &ocall_table_Enclave, &ms);
 	return status;
 }
 
@@ -164,7 +202,7 @@ sgx_status_t ecall_hash_block(sgx_enclave_id_t eid, int* retval, unsigned char k
 	ms_ecall_hash_block_t ms;
 	ms.ms_key = (unsigned char*)key;
 	ms.ms_size = size;
-	status = sgx_ecall(eid, 4, &ocall_table_Enclave, &ms);
+	status = sgx_ecall(eid, 6, &ocall_table_Enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
 	return status;
 }

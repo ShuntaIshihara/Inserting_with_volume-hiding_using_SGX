@@ -1,6 +1,5 @@
 enclave
 {
-#define TABLE_SIZE 997
     struct keyvalue {
         unsigned char key[256];
         unsigned char value[256];
@@ -20,7 +19,9 @@ enclave
                 [in,out]long *e);
         public void ecall_encrypt([in,out]unsigned char t_data[256], [in,string]unsigned char *data);
         public void ecall_decrypt([in,out]unsigned char dec[256], [in]unsigned char enc[256]);
-		public void ecall_insertion_start([in,size=table_size]struct keyvalue *table, size_t table_size, [in]struct keyvalue *data, [in]int *size);
+        public void ecall_table_malloc();
+        public void ecall_load([in,size=table_size]struct keyvalue *t, size_t table_size, [in]int *head);
+		public void ecall_insertion_start([in]struct keyvalue *data, [in]int *size, [in]int *block);
         public int ecall_hash_block([in]unsigned char key[256], [in]int *size);
 	};
 
@@ -30,6 +31,7 @@ enclave
         void ocall_err_different_size([in, string]const char *str);
         void ocall_err_print([in]sgx_status_t *st);
         void ocall_print([in, string]const char *str);
+        void ocall_return_table([in,size=table_size]struct keyvalue *t, size_t table_size, [in]int *block, [in]int *head);
         void ocall_return_stash([in]struct keyvalue stash[2]);
         void ocall_print_e([in]long *e);
 	};

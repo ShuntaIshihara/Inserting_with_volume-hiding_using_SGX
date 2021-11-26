@@ -4,7 +4,9 @@
 #include <string.h>
 #include <sgx_tcrypto.h>
 
-#define TABLE_SIZE 997
+#define TABLE_SIZE 10000
+
+struct keyvalue *table;
 
 //公開鍵、秘密鍵の生成
 int n_byte_size = 256;
@@ -237,8 +239,26 @@ struct keyvalue cuckoo(struct keyvalue *table, struct keyvalue data, int size, i
     return cuckoo(table, w, size, (tableID+1)%2, cnt+1, limit);
 }
 
-void ecall_insertion_start(struct keyvalue *table, size_t table_size, struct keyvalue *data, int *size)
+void ecall_table_malloc()
 {
+    table = (struct keyvalue*)malloc(sizeof(struct keyvalue)*TABLE_SIZE*2);
+    if (table == NULL) {
+        ocall_print("Error malloc");
+    }
+}
+
+void ecall_load(struct keyvalue *t, size_t table_size, int *head)
+{
+    int j = *head;
+    for (int i = 0; i < 2000; ++i) {
+        table[i+j] = t[i];
+        ocall_print("checkpoint2");
+    }
+}
+
+void ecall_insertion_start(struct keyvalue *data, int *size, int *block)
+{
+    ocall_print("checkpoint");
 	struct keyvalue stash[2];
 
     //新しいキーバリューデータを挿入し、托卵操作を行う
@@ -272,7 +292,13 @@ void ecall_insertion_start(struct keyvalue *table, size_t table_size, struct key
 //    }
     //ダミーデータを挿入し、托卵操作を行う
     stash[1] = cuckoo(table, dummy, *size, 0, 0, 7);
+
+    for (int i = 0; i < 10; ++i) {
+        int head = i*2000;
+        ocall_return_table(table+(i*2000), sizeof(struct keyvalue)*2000, &head, block);
+    }
     //OCALLでstashに格納するものをクライアントに返す
     ocall_return_stash(stash);
+    free(table);
 }
 
