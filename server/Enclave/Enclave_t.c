@@ -49,16 +49,10 @@ typedef struct ms_ecall_decrypt_t {
 	unsigned char* ms_enc;
 } ms_ecall_decrypt_t;
 
-typedef struct ms_ecall_load_t {
-	struct keyvalue* ms_t;
-	size_t ms_table_size;
-	int* ms_head;
-} ms_ecall_load_t;
-
 typedef struct ms_ecall_insertion_start_t {
+	struct keyvalue* ms_table;
+	size_t ms_t_size;
 	struct keyvalue* ms_data;
-	int* ms_size;
-	int* ms_block;
 } ms_ecall_insertion_start_t;
 
 typedef struct ms_ecall_hash_block_t {
@@ -78,13 +72,6 @@ typedef struct ms_ocall_err_print_t {
 typedef struct ms_ocall_print_t {
 	const char* ms_str;
 } ms_ocall_print_t;
-
-typedef struct ms_ocall_return_table_t {
-	struct keyvalue* ms_t;
-	size_t ms_table_size;
-	int* ms_block;
-	int* ms_head;
-} ms_ocall_return_table_t;
 
 typedef struct ms_ocall_return_stash_t {
 	struct keyvalue* ms_stash;
@@ -500,79 +487,6 @@ err:
 	return status;
 }
 
-static sgx_status_t SGX_CDECL sgx_ecall_table_malloc(void* pms)
-{
-	sgx_status_t status = SGX_SUCCESS;
-	if (pms != NULL) return SGX_ERROR_INVALID_PARAMETER;
-	ecall_table_malloc();
-	return status;
-}
-
-static sgx_status_t SGX_CDECL sgx_ecall_load(void* pms)
-{
-	CHECK_REF_POINTER(pms, sizeof(ms_ecall_load_t));
-	//
-	// fence after pointer checks
-	//
-	sgx_lfence();
-	ms_ecall_load_t* ms = SGX_CAST(ms_ecall_load_t*, pms);
-	sgx_status_t status = SGX_SUCCESS;
-	struct keyvalue* _tmp_t = ms->ms_t;
-	size_t _tmp_table_size = ms->ms_table_size;
-	size_t _len_t = _tmp_table_size;
-	struct keyvalue* _in_t = NULL;
-	int* _tmp_head = ms->ms_head;
-	size_t _len_head = sizeof(int);
-	int* _in_head = NULL;
-
-	CHECK_UNIQUE_POINTER(_tmp_t, _len_t);
-	CHECK_UNIQUE_POINTER(_tmp_head, _len_head);
-
-	//
-	// fence after pointer checks
-	//
-	sgx_lfence();
-
-	if (_tmp_t != NULL && _len_t != 0) {
-		_in_t = (struct keyvalue*)malloc(_len_t);
-		if (_in_t == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
-
-		if (memcpy_s(_in_t, _len_t, _tmp_t, _len_t)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-	}
-	if (_tmp_head != NULL && _len_head != 0) {
-		if ( _len_head % sizeof(*_tmp_head) != 0)
-		{
-			status = SGX_ERROR_INVALID_PARAMETER;
-			goto err;
-		}
-		_in_head = (int*)malloc(_len_head);
-		if (_in_head == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
-
-		if (memcpy_s(_in_head, _len_head, _tmp_head, _len_head)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-	}
-
-	ecall_load(_in_t, _tmp_table_size, _in_head);
-
-err:
-	if (_in_t) free(_in_t);
-	if (_in_head) free(_in_head);
-	return status;
-}
-
 static sgx_status_t SGX_CDECL sgx_ecall_insertion_start(void* pms)
 {
 	CHECK_REF_POINTER(pms, sizeof(ms_ecall_insertion_start_t));
@@ -582,25 +496,35 @@ static sgx_status_t SGX_CDECL sgx_ecall_insertion_start(void* pms)
 	sgx_lfence();
 	ms_ecall_insertion_start_t* ms = SGX_CAST(ms_ecall_insertion_start_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
+	struct keyvalue* _tmp_table = ms->ms_table;
+	size_t _tmp_t_size = ms->ms_t_size;
+	size_t _len_table = _tmp_t_size;
+	struct keyvalue* _in_table = NULL;
 	struct keyvalue* _tmp_data = ms->ms_data;
 	size_t _len_data = sizeof(struct keyvalue);
 	struct keyvalue* _in_data = NULL;
-	int* _tmp_size = ms->ms_size;
-	size_t _len_size = sizeof(int);
-	int* _in_size = NULL;
-	int* _tmp_block = ms->ms_block;
-	size_t _len_block = sizeof(int);
-	int* _in_block = NULL;
 
+	CHECK_UNIQUE_POINTER(_tmp_table, _len_table);
 	CHECK_UNIQUE_POINTER(_tmp_data, _len_data);
-	CHECK_UNIQUE_POINTER(_tmp_size, _len_size);
-	CHECK_UNIQUE_POINTER(_tmp_block, _len_block);
 
 	//
 	// fence after pointer checks
 	//
 	sgx_lfence();
 
+	if (_tmp_table != NULL && _len_table != 0) {
+		_in_table = (struct keyvalue*)malloc(_len_table);
+		if (_in_table == NULL) {
+			status = SGX_ERROR_OUT_OF_MEMORY;
+			goto err;
+		}
+
+		if (memcpy_s(_in_table, _len_table, _tmp_table, _len_table)) {
+			status = SGX_ERROR_UNEXPECTED;
+			goto err;
+		}
+
+	}
 	if (_tmp_data != NULL && _len_data != 0) {
 		_in_data = (struct keyvalue*)malloc(_len_data);
 		if (_in_data == NULL) {
@@ -614,49 +538,12 @@ static sgx_status_t SGX_CDECL sgx_ecall_insertion_start(void* pms)
 		}
 
 	}
-	if (_tmp_size != NULL && _len_size != 0) {
-		if ( _len_size % sizeof(*_tmp_size) != 0)
-		{
-			status = SGX_ERROR_INVALID_PARAMETER;
-			goto err;
-		}
-		_in_size = (int*)malloc(_len_size);
-		if (_in_size == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
 
-		if (memcpy_s(_in_size, _len_size, _tmp_size, _len_size)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-	}
-	if (_tmp_block != NULL && _len_block != 0) {
-		if ( _len_block % sizeof(*_tmp_block) != 0)
-		{
-			status = SGX_ERROR_INVALID_PARAMETER;
-			goto err;
-		}
-		_in_block = (int*)malloc(_len_block);
-		if (_in_block == NULL) {
-			status = SGX_ERROR_OUT_OF_MEMORY;
-			goto err;
-		}
-
-		if (memcpy_s(_in_block, _len_block, _tmp_block, _len_block)) {
-			status = SGX_ERROR_UNEXPECTED;
-			goto err;
-		}
-
-	}
-
-	ecall_insertion_start(_in_data, _in_size, _in_block);
+	ecall_insertion_start(_in_table, _tmp_t_size, _in_data);
 
 err:
+	if (_in_table) free(_in_table);
 	if (_in_data) free(_in_data);
-	if (_in_size) free(_in_size);
-	if (_in_block) free(_in_block);
 	return status;
 }
 
@@ -731,15 +618,13 @@ err:
 
 SGX_EXTERNC const struct {
 	size_t nr_ecall;
-	struct {void* ecall_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[7];
+	struct {void* ecall_addr; uint8_t is_priv; uint8_t is_switchless;} ecall_table[5];
 } g_ecall_table = {
-	7,
+	5,
 	{
 		{(void*)(uintptr_t)sgx_ecall_generate_keys, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_encrypt, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_decrypt, 0, 0},
-		{(void*)(uintptr_t)sgx_ecall_table_malloc, 0, 0},
-		{(void*)(uintptr_t)sgx_ecall_load, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_insertion_start, 0, 0},
 		{(void*)(uintptr_t)sgx_ecall_hash_block, 0, 0},
 	}
@@ -747,16 +632,15 @@ SGX_EXTERNC const struct {
 
 SGX_EXTERNC const struct {
 	size_t nr_ocall;
-	uint8_t entry_table[6][7];
+	uint8_t entry_table[5][5];
 } g_dyn_entry_table = {
-	6,
+	5,
 	{
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
-		{0, 0, 0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, },
+		{0, 0, 0, 0, 0, },
 	}
 };
 
@@ -901,91 +785,6 @@ sgx_status_t SGX_CDECL ocall_print(const char* str)
 	return status;
 }
 
-sgx_status_t SGX_CDECL ocall_return_table(struct keyvalue* t, size_t table_size, int* block, int* head)
-{
-	sgx_status_t status = SGX_SUCCESS;
-	size_t _len_t = table_size;
-	size_t _len_block = sizeof(int);
-	size_t _len_head = sizeof(int);
-
-	ms_ocall_return_table_t* ms = NULL;
-	size_t ocalloc_size = sizeof(ms_ocall_return_table_t);
-	void *__tmp = NULL;
-
-
-	CHECK_ENCLAVE_POINTER(t, _len_t);
-	CHECK_ENCLAVE_POINTER(block, _len_block);
-	CHECK_ENCLAVE_POINTER(head, _len_head);
-
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (t != NULL) ? _len_t : 0))
-		return SGX_ERROR_INVALID_PARAMETER;
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (block != NULL) ? _len_block : 0))
-		return SGX_ERROR_INVALID_PARAMETER;
-	if (ADD_ASSIGN_OVERFLOW(ocalloc_size, (head != NULL) ? _len_head : 0))
-		return SGX_ERROR_INVALID_PARAMETER;
-
-	__tmp = sgx_ocalloc(ocalloc_size);
-	if (__tmp == NULL) {
-		sgx_ocfree();
-		return SGX_ERROR_UNEXPECTED;
-	}
-	ms = (ms_ocall_return_table_t*)__tmp;
-	__tmp = (void *)((size_t)__tmp + sizeof(ms_ocall_return_table_t));
-	ocalloc_size -= sizeof(ms_ocall_return_table_t);
-
-	if (t != NULL) {
-		ms->ms_t = (struct keyvalue*)__tmp;
-		if (memcpy_s(__tmp, ocalloc_size, t, _len_t)) {
-			sgx_ocfree();
-			return SGX_ERROR_UNEXPECTED;
-		}
-		__tmp = (void *)((size_t)__tmp + _len_t);
-		ocalloc_size -= _len_t;
-	} else {
-		ms->ms_t = NULL;
-	}
-	
-	ms->ms_table_size = table_size;
-	if (block != NULL) {
-		ms->ms_block = (int*)__tmp;
-		if (_len_block % sizeof(*block) != 0) {
-			sgx_ocfree();
-			return SGX_ERROR_INVALID_PARAMETER;
-		}
-		if (memcpy_s(__tmp, ocalloc_size, block, _len_block)) {
-			sgx_ocfree();
-			return SGX_ERROR_UNEXPECTED;
-		}
-		__tmp = (void *)((size_t)__tmp + _len_block);
-		ocalloc_size -= _len_block;
-	} else {
-		ms->ms_block = NULL;
-	}
-	
-	if (head != NULL) {
-		ms->ms_head = (int*)__tmp;
-		if (_len_head % sizeof(*head) != 0) {
-			sgx_ocfree();
-			return SGX_ERROR_INVALID_PARAMETER;
-		}
-		if (memcpy_s(__tmp, ocalloc_size, head, _len_head)) {
-			sgx_ocfree();
-			return SGX_ERROR_UNEXPECTED;
-		}
-		__tmp = (void *)((size_t)__tmp + _len_head);
-		ocalloc_size -= _len_head;
-	} else {
-		ms->ms_head = NULL;
-	}
-	
-	status = sgx_ocall(3, ms);
-
-	if (status == SGX_SUCCESS) {
-	}
-	sgx_ocfree();
-	return status;
-}
-
 sgx_status_t SGX_CDECL ocall_return_stash(struct keyvalue stash[2])
 {
 	sgx_status_t status = SGX_SUCCESS;
@@ -1026,7 +825,7 @@ sgx_status_t SGX_CDECL ocall_return_stash(struct keyvalue stash[2])
 		ms->ms_stash = NULL;
 	}
 	
-	status = sgx_ocall(4, ms);
+	status = sgx_ocall(3, ms);
 
 	if (status == SGX_SUCCESS) {
 	}
@@ -1074,7 +873,7 @@ sgx_status_t SGX_CDECL ocall_print_e(long int* e)
 		ms->ms_e = NULL;
 	}
 	
-	status = sgx_ocall(5, ms);
+	status = sgx_ocall(4, ms);
 
 	if (status == SGX_SUCCESS) {
 	}

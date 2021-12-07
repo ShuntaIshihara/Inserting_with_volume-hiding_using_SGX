@@ -44,7 +44,21 @@ std::vector<cnt_data> deserialize(char buffer[], int size);
 void init(std::string filename, std::unordered_map<std::string, int>& id_list, std::vector<std::string>& key_list);
 
 std::vector<struct keyvalue> stash;
+std::vector<std::string> split(std::string& src, const char* delim)
+{
+    std::vector<std::string> vec;
+    std::string::size_type len = src.length();
 
+    for (std::string::size_type i = 0, n; i < len; i = n + 1) {
+        n = src.find_first_of(delim, i);
+        if (n == std::string::npos) {
+            n = len;
+        }
+        vec.push_back(src.substr(i, n - i));
+    }
+
+    return vec;
+}
 int main(int argc, char *argv[]){
     if (argc != 3) {
         std::cerr << "Command line arguments are not enough." << std::endl;
@@ -216,249 +230,276 @@ int main(int argc, char *argv[]){
     std::string line;
     int cnt = 0;
     int loop_cnt = 0;
-    while(std::cin >> line) {
-        auto start = std::chrono::system_clock::now();
-        //start_all = time(NULL);
-
+    int vc = 0;
+    while(1) {
         int flag = 0;
-        if (line == "quit" || line == "q") {
+        std::cout << "> ";
+        std::vector<std::string> v;
+        std::getline(std::cin, line);
+        v = split(line, " ");
+        std::string key;
+        std::string val;
+        if (v.size() == 1) {
+            key = v[0];
             flag = 1;
+        } else if (v.size() == 2) {
+            key = v[0];
+            val = v[1];
+            flag = 2;
+        } else {
+            std::cerr << "Warning: The number of inputs is incorrect." << std::endl;
+            std::cerr << "Usage:" << std::endl;
+            std::cerr << "Searching > [key]" << std::endl;
+            std::cerr << "Inserting > [key] [value]" << std::endl;
+            continue;
+        }
+        if (key == "q" || key == "quit") {
+            flag = 0;
         }
         send(sockfd, &flag, sizeof(int), 0);
-        if (flag) {
-            break;
-        }
+        vc += (int)sizeof(int);
+        if (flag == 0) break;
 
-        //新しいキーであれば、キーリストに追加
-        if (id_list.find(line) == id_list.end()) {
-            id_list[line] = cnt;
-            key_list.push_back(line);
-            cnt++;
-        }
+        if (flag == 2) {
+            auto start = std::chrono::system_clock::now();
 
-        //hash値 -> キー　リストの宣言と初期化
-        std::unordered_map<std::string, std::string> hash_list;
-
-        //key
-        std::string key = line;
-
-        auto start_c = std::chrono::system_clock::now();
-
-        //randomized response
-        std::vector<int> keys = randomized_response(0.5, id_list[line], id_list.size());
-
-        //サーバーに送るキーのリスト
-        std::vector<cnt_data> cnt_list;
-
-        //byteEncryptedOneの生成
-        paillier_plaintext_t* m1 = paillier_plaintext_from_ui(1);
-        paillier_ciphertext_t* ctxt1;
-        ctxt1 = paillier_enc(NULL, pubKey, m1, paillier_get_rand_devurandom);
-        char* byteEncryptedOne = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt1);
-
-        for (int i = 0; i < (int)keys.size(); ++i) {
-            //sha256ハッシュ値生成
-            std::string h = sha256(sha_ctx, key_list[keys[i]]);
-
-            hash_list[h] = key_list[keys[i]];
-
-            cnt_data w;
-            w.h = h;
-            std::memcpy(w.byteEncryptedValue, byteEncryptedOne, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-
-            cnt_list.push_back(w);
-        }
-
-        paillier_freeplaintext(m1);
-        paillier_freeciphertext(ctxt1);
-        free(byteEncryptedOne);
-        keys.clear();
-
-        //0を送るキーを選ぶ
-        std::vector<int> keys0 = select_0(0.5, id_list.size());
-
-        //byteEncryptedZeroを生成
-        paillier_plaintext_t* m0 = paillier_plaintext_from_ui(0);
-        paillier_ciphertext_t* ctxt0;
-        ctxt0 = paillier_enc(NULL, pubKey, m0, paillier_get_rand_devurandom);
-        char* byteEncryptedZero = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt0);
-
-        for (int i = 0; i < (int)keys0.size(); ++i) {
-            //sha256ハッシュ値生成
-            std::string h = sha256(sha_ctx, key_list[keys0[i]]);
-
-            hash_list[h] = key_list[keys0[i]];
-
-            cnt_data w;
-            w.h = h;
-            std::memcpy(w.byteEncryptedValue, byteEncryptedZero, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-
-            cnt_list.push_back(w);
-        }
-
-        paillier_freeplaintext(m0);
-        paillier_freeciphertext(ctxt0);
-        free(byteEncryptedZero);
-        keys0.clear();
-
-        //シリアライズ
-        std::stringstream ss;
-        {
-            cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
-            o_archive(cnt_list);
-        }
-
-        char buffer[ss.str().size()];
-        std::memcpy(buffer, ss.str().data(), ss.str().size());
-
-        int bf_size = ss.str().size();
-
-        send(sockfd, &bf_size, sizeof(int), 0);
-        send(sockfd, buffer, bf_size, 0);
-        cnt_list.clear();
-
-        //結果を受け取る
-        int count = 0;
-        int bytes;
-        int s;
-        do {
-            bytes = recv(sockfd, &s + count, sizeof(int) - count, 0);
-            if (bytes < 0) {
-                std::cerr << "recv s error\n";
-                return 1;
-            }
-            count += bytes;
-        }while(count < (int)sizeof(int));
-
-        count = 0;
-        char bf[s];
-        do {
-            bytes = recv(sockfd, bf + count, s - count, 0);
-            if (bytes < 0) {
-                std::cerr << "recv bf error" << std::endl;
-                return 1;
-            }
-            count += bytes;
-        }while(count < s);
-
-        //デシリアライズ
-        std::vector<cnt_data> recv_list = deserialize(bf, s);
-
-        int index;
-
-        for (int i = 0; i < (int)recv_list.size(); ++i) {
-            if (key != hash_list[recv_list[i].h]) {
-                continue;
+            //新しいキーであれば、キーリストに追加
+            if (id_list.find(key) == id_list.end()) {
+                id_list[key] = cnt;
+                key_list.push_back(key);
+                cnt++;
             }
 
-            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)recv_list[i].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-            paillier_plaintext_t* dec;
-            dec = paillier_dec(NULL, pubKey, secKey, ctxt);
-            index = mpz_get_si((mpz_srcptr)dec);
-        }
-        auto end_c = std::chrono::system_clock::now();
-
-        auto start_t = std::chrono::system_clock::now();
-        struct keyvalue data;
-        size_t enc_len = 256;
-        size_t dec_len = 0;
-        std::stringstream iss;
-        iss << index;
-        line = line + "," + iss.str();
-        unsigned char *in_key = (unsigned char*)line.c_str();
-        int size = 256;
-        
-        status = client_rsa_encrypt_sha256((const void *)pub_key, data.key, (size_t *)&size, in_key, std::strlen((const char *)in_key)+1);
-        client_err_print(status);        
+            //hash値 -> キー　リストの宣言と初期化
+            std::unordered_map<std::string, std::string> hash_list;
 
 
-        std::cin >> line;
-        unsigned char *in_value = (unsigned char*)line.c_str();
-        status = client_rsa_encrypt_sha256((const void *)pub_key, 
-                data.value, (size_t *)&size, in_value, std::strlen((const char *)in_value)+1);
-        client_err_print(status);
+            auto start_c = std::chrono::system_clock::now();
 
-                        
-        send(sockfd, &data, sizeof(struct keyvalue), 0); //送信
+            //randomized response
+            std::vector<int> keys = randomized_response(0.5, id_list[key], id_list.size());
 
-        //stash受信
-        struct keyvalue st[2];
-        count = 0;
-        do {
-            bytes = recv(sockfd, &st[0], sizeof(struct keyvalue), 0);
-            if (bytes < 0) {
-                std::cerr << "recv stash[0] error\n";
-                return 1;
+            //サーバーに送るキーのリスト
+            std::vector<cnt_data> cnt_list;
+
+            //byteEncryptedOneの生成
+            paillier_plaintext_t* m1 = paillier_plaintext_from_ui(1);
+            paillier_ciphertext_t* ctxt1;
+            ctxt1 = paillier_enc(NULL, pubKey, m1, paillier_get_rand_devurandom);
+            char* byteEncryptedOne = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt1);
+
+            for (int i = 0; i < (int)keys.size(); ++i) {
+                //sha256ハッシュ値生成
+                std::string h = sha256(sha_ctx, key_list[keys[i]]);
+
+                hash_list[h] = key_list[keys[i]];
+
+                cnt_data w;
+                w.h = h;
+                std::memcpy(w.byteEncryptedValue, byteEncryptedOne, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+                cnt_list.push_back(w);
             }
-            count+=bytes;
-        }while(count < 256);
 
-        count = 0;
-        do {
-            bytes = recv(sockfd, &st[1], sizeof(struct keyvalue), 0);
-            if (bytes < 0) {
-                std::cerr << "recv stash[1] error\n";
-                return 1;
+            paillier_freeplaintext(m1);
+            paillier_freeciphertext(ctxt1);
+            free(byteEncryptedOne);
+            keys.clear();
+
+            //0を送るキーを選ぶ
+            std::vector<int> keys0 = select_0(0.5, id_list.size());
+
+            //byteEncryptedZeroを生成
+            paillier_plaintext_t* m0 = paillier_plaintext_from_ui(0);
+            paillier_ciphertext_t* ctxt0;
+            ctxt0 = paillier_enc(NULL, pubKey, m0, paillier_get_rand_devurandom);
+            char* byteEncryptedZero = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, ctxt0);
+
+            for (int i = 0; i < (int)keys0.size(); ++i) {
+                //sha256ハッシュ値生成
+                std::string h = sha256(sha_ctx, key_list[keys0[i]]);
+
+                hash_list[h] = key_list[keys0[i]];
+
+                cnt_data w;
+                w.h = h;
+                std::memcpy(w.byteEncryptedValue, byteEncryptedZero, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+                cnt_list.push_back(w);
             }
-            count+=bytes;
-        }while(count < 256);
 
-        // stashに格納する
+            paillier_freeplaintext(m0);
+            paillier_freeciphertext(ctxt0);
+            free(byteEncryptedZero);
+            keys0.clear();
 
-        status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)st[0].key, enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+            //シリアライズ
+            std::stringstream ss;
+            {
+                cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
+                o_archive(cnt_list);
+            }
+
+            char buffer[ss.str().size()];
+            std::memcpy(buffer, ss.str().data(), ss.str().size());
+
+            int bf_size = ss.str().size();
+
+            send(sockfd, &bf_size, sizeof(int), 0);
+            vc += (int)sizeof(int);
+            send(sockfd, buffer, bf_size, 0);
+            vc += bf_size;
+            cnt_list.clear();
+
+            //結果を受け取る
+            int count = 0;
+            int bytes;
+            int s;
+            do {
+                bytes = recv(sockfd, &s + count, sizeof(int) - count, 0);
+                if (bytes < 0) {
+                    std::cerr << "recv s error\n";
+                    return 1;
+                }
+                count += bytes;
+            }while(count < (int)sizeof(int));
+            vc += count;
+
+            count = 0;
+            char bf[s];
+            do {
+                bytes = recv(sockfd, bf + count, s - count, 0);
+                if (bytes < 0) {
+                    std::cerr << "recv bf error" << std::endl;
+                    return 1;
+                }
+                count += bytes;
+            }while(count < s);
+            vc += count;
+
+            //デシリアライズ
+            std::vector<cnt_data> recv_list = deserialize(bf, s);
+
+            int index;
+
+            for (int i = 0; i < (int)recv_list.size(); ++i) {
+                if (key != hash_list[recv_list[i].h]) {
+                    continue;
+                }
+
+                paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)recv_list[i].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+                paillier_plaintext_t* dec;
+                dec = paillier_dec(NULL, pubKey, secKey, ctxt);
+                index = mpz_get_si((mpz_srcptr)dec);
+                paillier_freeplaintext(dec);
+                paillier_freeciphertext(ctxt);
+            }
+            auto end_c = std::chrono::system_clock::now();
+
+            auto start_t = std::chrono::system_clock::now();
+            struct keyvalue data;
+            size_t enc_len = 256;
+            size_t dec_len = 0;
+            std::string key_idx = key + ":" + std::to_string(index);
+            unsigned char *in_key = (unsigned char*)key_idx.c_str();
+            int size = 256;
+
+            status = client_rsa_encrypt_sha256((const void *)pub_key, data.key, (size_t *)&size, in_key, std::strlen((const char *)in_key)+1);
+            client_err_print(status);        
+
+
+            unsigned char *in_value = (unsigned char*)val.c_str();
+            status = client_rsa_encrypt_sha256((const void *)pub_key, 
+                    data.value, (size_t *)&size, in_value, std::strlen((const char *)in_value)+1);
             client_err_print(status);
-        }
 
-        unsigned char key0[dec_len];
-        status = client_rsa_decrypt_sha256(priv_key, key0, &dec_len,
-                (const unsigned char *)st[0].key, enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
-        if (std::strncmp((char*)key0, "dummy_", 6) != 0) {
-            stash.push_back(st[0]);
-            std::cout << "key(" << key0 << ")" << std::endl;
-        }
 
-        status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
-                (const unsigned char *)st[1].key, enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
+            send(sockfd, &data, sizeof(struct keyvalue), 0); //送信
+            vc += (int)sizeof(struct keyvalue);
 
-        unsigned char key1[dec_len];
-        status = client_rsa_decrypt_sha256(priv_key, key1, &dec_len,
-                (const unsigned char *)st[1].key, enc_len);
-        if (status != SUCCESS) {
-            std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
-            client_err_print(status);
-        }
-        if (std::strncmp((char*)key1, "dummy_", 6) != 0) {
-            stash.push_back(st[1]);
-            std::cout << "key(" << key1 << ")" << std::endl;
-        }
-        auto end_t = std::chrono::system_clock::now(); 
-        auto end = std::chrono::system_clock::now();
-        //end_all = time(NULL);
+            //stash受信
+            struct keyvalue st[2];
+            count = 0;
+            do {
+                bytes = recv(sockfd, &st[0], sizeof(struct keyvalue), 0);
+                if (bytes < 0) {
+                    std::cerr << "recv stash[0] error\n";
+                    return 1;
+                }
+                count+=bytes;
+            }while(count < (int)sizeof(struct keyvalue));
+            vc += count;
 
-        if (loop_cnt != 0) {
-            sum += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-            sum_c += std::chrono::duration_cast<std::chrono::milliseconds>(end_c-start_c).count();
-            sum_t += std::chrono::duration_cast<std::chrono::milliseconds>(end_t-start_t).count();
-        }
+            count = 0;
+            do {
+                bytes = recv(sockfd, &st[1], sizeof(struct keyvalue), 0);
+                if (bytes < 0) {
+                    std::cerr << "recv stash[1] error\n";
+                    return 1;
+                }
+                count+=bytes;
+            }while(count < (int)sizeof(struct keyvalue));
+            vc += count;
 
-        loop_cnt++;
-        std::cout << "end" << std::endl;
+            // stashに格納する
+
+            status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
+                    (const unsigned char *)st[0].key, enc_len);
+            if (status != SUCCESS) {
+                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+                client_err_print(status);
+            }
+
+            unsigned char key0[dec_len];
+            status = client_rsa_decrypt_sha256(priv_key, key0, &dec_len,
+                    (const unsigned char *)st[0].key, enc_len);
+            if (status != SUCCESS) {
+                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+                client_err_print(status);
+            }
+            if (std::strncmp((char*)key0, "dummy_", 6) != 0) {
+                stash.push_back(st[0]);
+                std::cout << "key(" << key0 << ")" << std::endl;
+            }
+
+            status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
+                    (const unsigned char *)st[1].key, enc_len);
+            if (status != SUCCESS) {
+                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+                client_err_print(status);
+            }
+
+            unsigned char key1[dec_len];
+            status = client_rsa_decrypt_sha256(priv_key, key1, &dec_len,
+                    (const unsigned char *)st[1].key, enc_len);
+            if (status != SUCCESS) {
+                std::cerr << "Error at: sgx_rsa_priv_decrypt_sha256\n";
+                client_err_print(status);
+            }
+            if (std::strncmp((char*)key1, "dummy_", 6) != 0) {
+                stash.push_back(st[1]);
+                std::cout << "key(" << key1 << ")" << std::endl;
+            }
+            auto end_t = std::chrono::system_clock::now(); 
+            auto end = std::chrono::system_clock::now();
+            //end_all = time(NULL);
+
+            if (loop_cnt != 0) {
+                sum += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+                sum_c += std::chrono::duration_cast<std::chrono::milliseconds>(end_c-start_c).count();
+                sum_t += std::chrono::duration_cast<std::chrono::milliseconds>(end_t-start_t).count();
+            }
+
+            loop_cnt++;
+            std::cout << "insertion pass" << std::endl;
+        }
     }
+    std::cout << "end" << std::endl;
 
     double average_insertion = (double)sum_t / (loop_cnt-1);
     double average_volume = (double)sum_c / (loop_cnt-1);
     double average_all = (double)sum / (loop_cnt-1);
+    double ave_vol = (double)vc / (loop_cnt);
 
     ofs << "ボリューム更新の平均処理時間(ms): ";
     ofs << std::to_string(average_volume) << std::endl;
@@ -468,6 +509,9 @@ int main(int argc, char *argv[]){
 
     ofs << "全体の平均処理時間(s): ";
     ofs << std::to_string(average_all) << std::endl;
+
+    ofs << "全体の通信量(bytes): ";
+    ofs << std::to_string(ave_vol) << std::endl;
 
 
     //ソケットクローズ

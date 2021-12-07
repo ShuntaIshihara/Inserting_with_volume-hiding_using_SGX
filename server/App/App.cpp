@@ -17,6 +17,7 @@
 #include <sgx_urts.h>
 #include "error_print.h"
 #include <openssl/evp.h>
+#include <openssl/sha.h>
 #include <gmp.h>
 #include <cereal/cereal.hpp>
 #include <cereal/archives/portable_binary.hpp>
@@ -25,7 +26,7 @@
 #include <cereal/types/array.hpp>
 #include "structure.hpp"
 
-#define BLOCK_SIZE 10
+#define BLOCK_SIZE 100
 #define TABLE_SIZE 10000
 
 #include "paillier.h"
@@ -40,12 +41,6 @@ struct keyvalue *table;
 struct keyvalue stash[2];
 
 //OCALL implementation
-void ocall_return_table(struct keyvalue *t, size_t table_size, int *head, int *block)
-{
-    for (int i = 0; i < 2000; ++i) {
-        table[(*block)*2*TABLE_SIZE+(*head)+i] = t[i];
-    }
-}
 
 void ocall_return_stash(struct keyvalue st[2])
 {
@@ -181,6 +176,7 @@ int initialize_enclave()
 //テーブルの初期化関数
 void table_init(struct keyvalue *table)
 {
+    std::cout << "Start table init." << std::endl;
     for (int i = 0; i < BLOCK_SIZE; i++) {
         for (int j = 0; j < TABLE_SIZE; j++) {
             unsigned char key[15] = "dummy_";
@@ -230,6 +226,30 @@ void table_init(struct keyvalue *table)
             }*/
         }
     }
+    std::cout << "End init table." <<std::endl;
+}
+
+std::string sha256_hash(std::string m)
+{
+    SHA256_CTX sha_ctx;
+	SHA256_Init(&sha_ctx);
+    //sha256ハッシュ値生成
+    unsigned char digest[SHA256_DIGEST_LENGTH];
+
+
+    SHA256_Update(&sha_ctx, m.c_str(), m.length());
+    SHA256_Final(digest, &sha_ctx);
+
+
+    // ハッシュ値(16進数)を文字列に変換
+    std::string h = "";
+    for (int j = 0; j < SHA256_DIGEST_LENGTH; ++j) {
+        std::stringstream ss;
+        ss << std::hex << (int)digest[j];
+        h.append(ss.str());
+    }
+
+    return h;
 }
 
 void init_cnt(std::string filename, std::unordered_map<std::string, int>& indices, std::vector<char*>& cnt_table, paillier_pubkey_t *pubKey)
@@ -243,7 +263,8 @@ void init_cnt(std::string filename, std::unordered_map<std::string, int>& indice
     std::string line;
     int index = 0;
     while (std::getline(input_file, line)) {
-        indices[line] = index;
+        std::string h = sha256_hash(line);
+        indices[h] = index;
         index++;
         paillier_plaintext_t* m = paillier_plaintext_from_ui(0);
         paillier_ciphertext_t* ctxt;
@@ -253,8 +274,61 @@ void init_cnt(std::string filename, std::unordered_map<std::string, int>& indice
 
     input_file.close();
 }
+/*
+std::vector<std::string> split(std::string& src, const char* delim)
+{
+    std::vector<std::string> vec;
+    std::string::size_type len = src.length();
+
+    for (std::string::size_type i = 0, n; i < len; i = n + 1) {
+        n = src.find_first_of(delim, i);
+        if (n == std::string::npos) {
+            n = len;
+        }
+        vec.push_back(src.substr(i, n - i));
+    }
+
+    return vec;
+}
 
 
+void insert_file_data(std::string filename, struct keyvalue *table, std::unordered_map<std::string, int>& indicies, std::vector<char*>& cnt_table)
+{
+    struct keyvalue data;
+    std::ifstream ifs(filename);
+    if (!ifs.is_open()) {
+        std::cerr << "Error: Could not open " << filename << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    std::string line;
+    while (std::getline(ifs, line)) {
+        std::vector<std::string> v = split(line, " ");
+        std::string key = v[0];
+        std::string val = v[1];
+        std::string h = sha256_hash(key);
+
+
+        paillier_ciphertext_t* encryptedCnt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+
+        paillier_ciphertext_t* encryptedSum = paillier_create_enc_zero();
+
+        paillier_ciphertext_t* encryptedValue = paillier_ciphertext_from_bytes((void*)cnt_list[j].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+        paillier_plaintext_t* m1 = paillier_plaintext_from_ui(1);
+        paillier_ciphertext_t* ctxt1;
+        ctxt1 = paillier_enc(NULL, pubKey, m1, paillier_get_rand_devurandom);
+
+        paillier_mul(pubKey, encryptedSum, ctxt1, encryptedValue);
+
+
+        char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, encryptedSum);
+
+
+        std::memcpy(cnt_table[indices[h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+    }
+}
+*/
 int main(int argc, char *argv[])
 {
     if (argc != 3) {
@@ -270,9 +344,9 @@ int main(int argc, char *argv[])
         std::cout << "ファイルが開けませんでした。" << std::endl;
         return 1;
     }
-    auto sum = 0;
-    auto sum_c = 0;
-    auto sum_t = 0;
+    auto sum = 0.0;
+    auto sum_c = 0.0;
+    auto sum_t = 0.0;
 
     
 
@@ -379,7 +453,6 @@ int main(int argc, char *argv[])
     //受信
     int cnt = 0;
     while (1) {
-        auto start = std::chrono::system_clock::now();
         int count = 0;
         int bytes;
         int flag;
@@ -392,171 +465,159 @@ int main(int argc, char *argv[])
             count += bytes;
         }while(count < sizeof(int));
 
-        if (flag) break;
+        if (flag == 0) break;
+        if (flag == 2) {
+            auto start = std::chrono::system_clock::now();
 
-        struct keyvalue data;
 
-        count = 0;
-        int bf_size;
-        do {
-            bytes = recv(connect, &bf_size + count, (int)sizeof(int) - count, 0);
-            if (bytes < 0) {
-                std::cerr << "recv data error0!" << std::endl;
-                return 1;
+            struct keyvalue data;
+
+            count = 0;
+            int bf_size;
+            do {
+                bytes = recv(connect, &bf_size + count, (int)sizeof(int) - count, 0);
+                if (bytes < 0) {
+                    std::cerr << "recv data error0!" << std::endl;
+                    return 1;
+                }
+                count += bytes;
+            }while(count < (int)sizeof(int));
+
+
+            char buffer[bf_size];
+            count = 0;
+            do {
+                bytes = recv(connect, buffer + count, bf_size - count, 0);
+                if (bytes < 0) {
+                    std::cerr << "recv data error1!" << std::endl;
+                    return 1;
+                }
+                count += bytes;
+            }while(count < bf_size);
+
+
+
+            //デシリアライズ
+            std::vector<cnt_data> cnt_list = deserialize(buffer, bf_size);
+
+            std::vector<cnt_data> send_list;
+
+            auto start_c = std::chrono::system_clock::now();
+            for (int j = 0; j < cnt_list.size(); ++j) {
+                if(indices.find(cnt_list[j].h) == indices.end()) {
+                    index++;
+                    indices[cnt_list[j].h] = index;
+                }
+                paillier_ciphertext_t* encryptedCnt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+
+                paillier_ciphertext_t* encryptedSum = paillier_create_enc_zero();
+
+                paillier_ciphertext_t* encryptedValue = paillier_ciphertext_from_bytes((void*)cnt_list[j].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+
+                paillier_mul(pubKey, encryptedSum, encryptedCnt, encryptedValue);
+
+
+                char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, encryptedSum);
+
+                cnt_data w;
+
+                w.h = cnt_list[j].h;
+                std::memcpy(w.byteEncryptedValue, byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+                send_list.push_back(w);
+
+
+                std::memcpy(cnt_table[indices[cnt_list[j].h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+
+                // Decrypt the ciphertext (sum)
+                //            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+
+                paillier_freeciphertext(encryptedValue);
+                paillier_freeciphertext(encryptedCnt);
+                paillier_freeciphertext(encryptedSum);
+                free(byteEncryptedSum);
+
+                //            paillier_plaintext_t* dec;
+                //            dec = paillier_dec(NULL, pubKey, secKey, ctxt);
+                //            std::cout << "cnt_table[" << indices[cnt_list[j].h] << "] = ";
+                //            gmp_printf("Decrypted value: %Zd\n", dec);
+                //            paillier_freeplaintext(dec);
+
+
             }
-            count += bytes;
-        }while(count < (int)sizeof(int));
+            auto end_c = std::chrono::system_clock::now();
 
-
-        char buffer[bf_size];
-        count = 0;
-        do {
-            bytes = recv(connect, buffer + count, bf_size - count, 0);
-            if (bytes < 0) {
-                std::cerr << "recv data error1!" << std::endl;
-                return 1;
+            std::stringstream ss;
+            {
+                cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
+                o_archive(send_list);
             }
-            count += bytes;
-        }while(count < bf_size);
+            char bf[ss.str().size()];
+            std::memcpy(bf, ss.str().data(), ss.str().size());
+
+            int s = ss.str().size();
+            send(connect, &s, sizeof(int), 0);
+            send(connect, bf, s, 0);
+
+            count = 0;
+            do {
+                bytes = recv(connect, &data + count, sizeof(struct keyvalue) - count, 0);
+                if (bytes < 0) {
+                    std::cerr << "recv data error\n";
+                    return 1;
+                }
+                count += bytes;
+            }while(count < sizeof(struct keyvalue));
+
+            auto start_t = std::chrono::system_clock::now();
 
 
-
-        //デシリアライズ
-        std::vector<cnt_data> cnt_list = deserialize(buffer, bf_size);
-
-        std::vector<cnt_data> send_list;
-
-        auto start_c = std::chrono::system_clock::now();
-        for (int j = 0; j < cnt_list.size(); ++j) {
-            if(indices.find(cnt_list[j].h) == indices.end()) {
-                index++;
-                indices[cnt_list[j].h] = index;
-            }
-            paillier_ciphertext_t* encryptedCnt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            //blockの振り分け
+            int block;
+            int block_size = BLOCK_SIZE;
+            status = ecall_hash_block(global_eid, &block, data.key, &block_size);
 
 
-            paillier_ciphertext_t* encryptedSum = paillier_create_enc_zero();
-
-            paillier_ciphertext_t* encryptedValue = paillier_ciphertext_from_bytes((void*)cnt_list[j].byteEncryptedValue, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-
- 
-            paillier_mul(pubKey, encryptedSum, encryptedCnt, encryptedValue);
-
-
-            char* byteEncryptedSum = (char*)paillier_ciphertext_to_bytes(PAILLIER_BITS_TO_BYTES(pubKey->bits)*2, encryptedSum);
-
-            cnt_data w;
-
-            w.h = cnt_list[j].h;
-            std::memcpy(w.byteEncryptedValue, byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-
-            send_list.push_back(w);
-
-
-            std::memcpy(cnt_table[indices[cnt_list[j].h]], byteEncryptedSum, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-
-
-            // Decrypt the ciphertext (sum)
-//            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)cnt_table[indices[cnt_list[j].h]], PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
-
-            paillier_freeciphertext(encryptedValue);
-            paillier_freeciphertext(encryptedCnt);
-            paillier_freeciphertext(encryptedSum);
-            free(byteEncryptedSum);
-
-//            paillier_plaintext_t* dec;
-//            dec = paillier_dec(NULL, pubKey, secKey, ctxt);
-//            std::cout << "cnt_table[" << indices[cnt_list[j].h] << "] = ";
-//            gmp_printf("Decrypted value: %Zd\n", dec);
-//            paillier_freeplaintext(dec);
-
-
-        }
-        auto end_c = std::chrono::system_clock::now();
-
-        std::stringstream ss;
-        {
-            cereal::PortableBinaryOutputArchive o_archive(ss, cereal::PortableBinaryOutputArchive::Options::LittleEndian());
-            o_archive(send_list);
-        }
-        char bf[ss.str().size()];
-        std::memcpy(bf, ss.str().data(), ss.str().size());
-
-        int s = ss.str().size();
-        send(connect, &s, sizeof(int), 0);
-        send(connect, bf, s, 0);
-
-        count = 0;
-        do {
-            bytes = recv(connect, &data + count, sizeof(struct keyvalue) - count, 0);
-            if (bytes < 0) {
-                std::cerr << "recv data error\n";
-                return 1;
-            }
-            count += bytes;
-        }while(count < sizeof(struct keyvalue));
-
-        auto start_t = std::chrono::system_clock::now();
-        unsigned char check_data[256];
-        status = ecall_decrypt(global_eid, check_data, data.key);
-
-
-        //blockの振り分け
-        int block;
-        int block_size = BLOCK_SIZE;
-        status = ecall_hash_block(global_eid, &block, data.key, &block_size);
-
-
-        int table_size = TABLE_SIZE;
-        clock_t start_insertion = clock();
-        status = ecall_table_malloc(global_eid);
-        if (status != SGX_SUCCESS) {
-            sgx_error_print(status);
-            return -1;
-        }
-        for (int i = 0; i < 10; ++i) {
-            int head = i*2000;
-            status = ecall_load(global_eid, table+block*2*TABLE_SIZE+(i*2000), sizeof(struct keyvalue)*2000, &head);
+            clock_t start_insertion = clock();
+            status = ecall_insertion_start(global_eid, table+(block*2*TABLE_SIZE),
+                    sizeof(struct keyvalue)*2*TABLE_SIZE, &data);
             if (status != SGX_SUCCESS) {
                 sgx_error_print(status);
                 return -1;
             }
-            std::cout << "checkpoint1" << std::endl;
+            auto end_t = std::chrono::system_clock::now();
+
+            //stash送信
+            send(connect, &stash[0], sizeof(struct keyvalue), 0); //送信
+            send(connect, &stash[1], sizeof(struct keyvalue), 0);
+            auto end = std::chrono::system_clock::now();
+
+            //        unsigned char dec[256];
+            //        std::cout << "T1 = {";
+            //        for (int i = 0; i < TABLE_SIZE - 1; i++) {
+            //            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE + i].key);
+            //            std::cout << dec << ", ";
+            //        }
+            //        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE-1].key);
+            //        std::cout << dec << "}" << std::endl;
+            //
+            //        std::cout << "T2 = {";
+            //        for (int i = 0; i < TABLE_SIZE - 1; i++) {
+            //            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+i].key);
+            //            std::cout << dec << ", ";
+            //        }
+            //        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+TABLE_SIZE-1].key);
+            //        std::cout << dec << "}" << std::endl;
+
+            sum += std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+            sum_c += std::chrono::duration_cast<std::chrono::microseconds>(end_c-start_c).count();
+            sum_t += std::chrono::duration_cast<std::chrono::microseconds>(end_t-start_t).count();
+
+            cnt++;
         }
-        status = ecall_insertion_start(global_eid, &data, &table_size, &block);
-        if (status != SGX_SUCCESS) {
-            sgx_error_print(status);
-            return -1;
-        }
-        auto end_t = std::chrono::system_clock::now();
-
-        //stash送信
-        send(connect, &stash[0], sizeof(struct keyvalue), 0); //送信
-        send(connect, &stash[1], sizeof(struct keyvalue), 0);
-        auto end = std::chrono::system_clock::now();
-
-//        unsigned char dec[256];
-//        std::cout << "T1 = {";
-//        for (int i = 0; i < TABLE_SIZE - 1; i++) {
-//            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE + i].key);
-//            std::cout << dec << ", ";
-//        }
-//        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE-1].key);
-//        std::cout << dec << "}" << std::endl;
-//
-//        std::cout << "T2 = {";
-//        for (int i = 0; i < TABLE_SIZE - 1; i++) {
-//            ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+i].key);
-//            std::cout << dec << ", ";
-//        }
-//        ecall_decrypt(global_eid, dec, table[block*2*TABLE_SIZE+TABLE_SIZE+TABLE_SIZE-1].key);
-//        std::cout << dec << "}" << std::endl;
-
-        sum += std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
-        sum_c += std::chrono::duration_cast<std::chrono::microseconds>(end_c-start_c).count();
-        sum_t += std::chrono::duration_cast<std::chrono::microseconds>(end_t-start_t).count();
-
-        cnt++;
     }
 
     double ave = (double)sum / cnt;
@@ -570,7 +631,7 @@ int main(int argc, char *argv[])
     ofs << std::to_string(ave_t) << "micro s" << std::endl;
 
     ofs << "全体の処理時間: ";
-    ofs << std::to_string(ave) << "micor s" << std::endl;
+    ofs << std::to_string(ave) << "micoro s" << std::endl;
 
     free(table);
 

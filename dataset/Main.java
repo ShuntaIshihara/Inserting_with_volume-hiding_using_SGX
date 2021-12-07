@@ -58,13 +58,13 @@ class Main {
                 if (g > key_size) g = key_size;
                 pw_g2.print(String.valueOf(g) + newline);
                 pw_u2.print(String.valueOf(u) + newline);
-                String keyg = "key_" + Integer.toString(g) + newline;
+                String keyg = "key_" + Integer.toString(g) + " ";
                 StringBuilder sb_g = new StringBuilder(n);
                 sb_g.append(keyg);
                 sb_g.append(getRandomString() + newline);
                 pw_g1.print(sb_g.toString());
 
-                String keyu = "key_" + Integer.toString(u) + newline;
+                String keyu = "key_" + Integer.toString(u) + " ";
                 StringBuilder sb_u = new StringBuilder(n);
                 sb_u.append(keyu);
                 sb_u.append(getRandomString() + newline);

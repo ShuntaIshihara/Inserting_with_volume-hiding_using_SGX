@@ -6,7 +6,6 @@
 
 #define TABLE_SIZE 10000
 
-struct keyvalue *table;
 
 //公開鍵、秘密鍵の生成
 int n_byte_size = 256;
@@ -187,7 +186,6 @@ int hash_1(unsigned char* key, int size)
     
     int *h = (int *)hash;
     free(hash);
-    free(key);
 
     return abs(*h) % size;
 }
@@ -202,14 +200,16 @@ int hash_2(unsigned char* key, int size)
     
     int *h = (int *)hash;
     free(hash);
-    free(key);
 
     return abs(*h) % size;
 }
 
 int ecall_hash_block(unsigned char key[256], int *size)
 {
-    return hash_1(decrypt(key), *size);
+    unsigned char *dec_key = decrypt(key);
+    int h = hash_1(dec_key, *size);
+    free(dec_key);
+    return h;
 }
 
 int is_dummy(unsigned char *k)
@@ -219,50 +219,34 @@ int is_dummy(unsigned char *k)
     return 0;
 }
 
-struct keyvalue cuckoo(struct keyvalue *table, struct keyvalue data, int size, int tableID, int cnt, int limit)
+struct keyvalue cuckoo(struct keyvalue *table, struct keyvalue data, int tableID, int cnt, int limit)
 {
     if (cnt >= limit) return data;
 
     //T1, T2それぞれのハッシュ値を得る
     int pos[2];
-    pos[0] = hash_1(decrypt(data.key), size);
-    pos[1] = hash_2(decrypt(data.key), size);
+    unsigned char *dec_key = decrypt(data.key);
+    pos[0] = hash_1(dec_key, TABLE_SIZE);
+    pos[1] = hash_2(dec_key, TABLE_SIZE);
+    free(dec_key);
 
     //追い出し操作をする
     struct keyvalue w = table[tableID*TABLE_SIZE+pos[tableID]];
     table[tableID*TABLE_SIZE+pos[tableID]] = data;
 
-    unsigned char *k = decrypt(w.key);
+//    unsigned char *k = decrypt(w.key);
 //    if (is_dummy(k)) return w;
-    free(k);
+//    free(k);
     //追い出されたデータをもう一方のテーブルに移す
-    return cuckoo(table, w, size, (tableID+1)%2, cnt+1, limit);
+    return cuckoo(table, w, (tableID+1)%2, cnt+1, limit);
 }
 
-void ecall_table_malloc()
+void ecall_insertion_start(struct keyvalue *table, size_t t_size, struct keyvalue *data)
 {
-    table = (struct keyvalue*)malloc(sizeof(struct keyvalue)*TABLE_SIZE*2);
-    if (table == NULL) {
-        ocall_print("Error malloc");
-    }
-}
-
-void ecall_load(struct keyvalue *t, size_t table_size, int *head)
-{
-    int j = *head;
-    for (int i = 0; i < 2000; ++i) {
-        table[i+j] = t[i];
-        ocall_print("checkpoint2");
-    }
-}
-
-void ecall_insertion_start(struct keyvalue *data, int *size, int *block)
-{
-    ocall_print("checkpoint");
 	struct keyvalue stash[2];
 
     //新しいキーバリューデータを挿入し、托卵操作を行う
-    stash[0] = cuckoo(table, *data, *size, 0, 0, 7);
+    stash[0] = cuckoo(table, *data, 0, 0, 7);
 
     //ランダムなキーバリューデータ（ダミーデータ）を生成
     struct keyvalue dummy;
@@ -291,14 +275,9 @@ void ecall_insertion_start(struct keyvalue *data, int *size, int *block)
         v[31] = '\0';
 //    }
     //ダミーデータを挿入し、托卵操作を行う
-    stash[1] = cuckoo(table, dummy, *size, 0, 0, 7);
+    stash[1] = cuckoo(table, dummy, 0, 0, 7);
 
-    for (int i = 0; i < 10; ++i) {
-        int head = i*2000;
-        ocall_return_table(table+(i*2000), sizeof(struct keyvalue)*2000, &head, block);
-    }
     //OCALLでstashに格納するものをクライアントに返す
     ocall_return_stash(stash);
-    free(table);
 }
 

@@ -26,15 +26,12 @@ typedef struct keyvalue {
 void ecall_generate_keys(unsigned char n[256], unsigned char d[256], unsigned char p[256], unsigned char q[256], unsigned char dmp1[256], unsigned char dmq1[256], unsigned char iqmp[256], long int* e);
 void ecall_encrypt(unsigned char t_data[256], unsigned char* data);
 void ecall_decrypt(unsigned char dec[256], unsigned char enc[256]);
-void ecall_table_malloc(void);
-void ecall_load(struct keyvalue* t, size_t table_size, int* head);
-void ecall_insertion_start(struct keyvalue* data, int* size, int* block);
+void ecall_insertion_start(struct keyvalue* table, size_t t_size, struct keyvalue* data);
 int ecall_hash_block(unsigned char key[256], int* size);
 
 sgx_status_t SGX_CDECL ocall_err_different_size(const char* str);
 sgx_status_t SGX_CDECL ocall_err_print(sgx_status_t* st);
 sgx_status_t SGX_CDECL ocall_print(const char* str);
-sgx_status_t SGX_CDECL ocall_return_table(struct keyvalue* t, size_t table_size, int* block, int* head);
 sgx_status_t SGX_CDECL ocall_return_stash(struct keyvalue stash[2]);
 sgx_status_t SGX_CDECL ocall_print_e(long int* e);
 
