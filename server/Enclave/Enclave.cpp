@@ -281,3 +281,56 @@ void ecall_insertion_start(struct keyvalue *table, size_t t_size, struct keyvalu
     ocall_return_stash(stash);
 }
 
+void itoa(int num, char *str, size_t size)
+{
+    int i = 0;
+    if (num < 0) {
+        str[i] = '-';
+        i++;
+        num = abs(num);
+    }
+    int number = num;
+    int digit = 0;
+    while(number!=0){
+        number = number / 10;
+        ++digit;
+    }
+    int j;
+    for (j = digit-1; j >= 0; j--) {
+        str[i+j] = '0' + (num % 10);
+        num = num / 10;
+    }
+}
+
+int ecall_get_block(unsigned char enc_key[256], int *i, int *block_size)
+{
+    unsigned char *dec_key = decrypt(enc_key);
+    int dec_len = strlen((const char*)dec_key)+1;
+    int len = dec_len + 11;
+    char key_idx[len];
+    strlcpy(key_idx, (const char*)dec_key, dec_len);
+    free(dec_key);
+    strncat(key_idx, ":", 1);
+    char idx[10];
+    itoa(*i, idx, 10);
+    strncat(key_idx, idx, strlen((const char*)idx));
+    return hash_1((unsigned char*)key_idx, *block_size);
+}
+
+void ecall_search(struct keyvalue kvs[2], struct keyvalue *table, size_t t_size, unsigned char enc_key[256], int *i)
+{
+    unsigned char *dec_key = decrypt(enc_key);
+    int dec_len = strlen((const char*)dec_key)+1;
+    int len = dec_len + 11;
+    char key_idx[len];
+    strlcpy(key_idx, (const char*)dec_key, dec_len);
+    free(dec_key);
+    strncat(key_idx, ":", 1);
+    char idx[10];
+    itoa(*i, idx, 10);
+    strncat(key_idx, idx, strlen((const char*)idx));
+    int pos1 = hash_1((unsigned char*)key_idx, TABLE_SIZE);
+    int pos2 = hash_2((unsigned char*)key_idx, TABLE_SIZE);
+    kvs[0] = table[pos1];
+    kvs[1] = table[TABLE_SIZE+pos2];
+}

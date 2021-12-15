@@ -28,6 +28,8 @@ void ecall_encrypt(unsigned char t_data[256], unsigned char* data);
 void ecall_decrypt(unsigned char dec[256], unsigned char enc[256]);
 void ecall_insertion_start(struct keyvalue* table, size_t t_size, struct keyvalue* data);
 int ecall_hash_block(unsigned char key[256], int* size);
+int ecall_get_block(unsigned char enc_key[256], int* i, int* block_size);
+void ecall_search(struct keyvalue kvs[2], struct keyvalue* table, size_t t_size, unsigned char enc_key[256], int* i);
 
 sgx_status_t SGX_CDECL ocall_err_different_size(const char* str);
 sgx_status_t SGX_CDECL ocall_err_print(sgx_status_t* st);

@@ -50,6 +50,8 @@ sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, unsigned char t_data[256], unsi
 sgx_status_t ecall_decrypt(sgx_enclave_id_t eid, unsigned char dec[256], unsigned char enc[256]);
 sgx_status_t ecall_insertion_start(sgx_enclave_id_t eid, struct keyvalue* table, size_t t_size, struct keyvalue* data);
 sgx_status_t ecall_hash_block(sgx_enclave_id_t eid, int* retval, unsigned char key[256], int* size);
+sgx_status_t ecall_get_block(sgx_enclave_id_t eid, int* retval, unsigned char enc_key[256], int* i, int* block_size);
+sgx_status_t ecall_search(sgx_enclave_id_t eid, struct keyvalue kvs[2], struct keyvalue* table, size_t t_size, unsigned char enc_key[256], int* i);
 
 #ifdef __cplusplus
 }

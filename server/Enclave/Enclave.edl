@@ -19,8 +19,10 @@ enclave
                 [in,out]long *e);
         public void ecall_encrypt([in,out]unsigned char t_data[256], [in,string]unsigned char *data);
         public void ecall_decrypt([in,out]unsigned char dec[256], [in]unsigned char enc[256]);
-		public void ecall_insertion_start([in,size=t_size]struct keyvalue *table, size_t t_size, [in]struct keyvalue *data);
+		public void ecall_insertion_start([in,out,size=t_size]struct keyvalue *table, size_t t_size, [in]struct keyvalue *data);
         public int ecall_hash_block([in]unsigned char key[256], [in]int *size);
+        public int ecall_get_block([in]unsigned char enc_key[256], [in]int *i, [in]int *block_size);
+        public void ecall_search([in,out]struct keyvalue kvs[2], [in,size=t_size]struct keyvalue *table, size_t t_size, [in]unsigned char enc_key[256], [in]int *i);
 	};
 
 	untrusted

@@ -13,3 +13,13 @@ typedef struct {
         archive(h, byteEncryptedValue);
     }
 }cnt_data;
+
+typedef struct {
+    unsigned char key[256];
+    unsigned char value[256];
+    template<class Archive>
+    void serialize(Archive& archive)
+    {
+        archive(key, value);
+    }
+}SKV;

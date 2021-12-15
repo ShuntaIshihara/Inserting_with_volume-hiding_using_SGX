@@ -15,7 +15,7 @@
 #include <unistd.h> //close()に利用
 #include "structure.hpp"
 
-#define TABLE_SIZE 1000003
+#define TABLE_SIZE 1000000
 
 
 void init_table(struct keyvalue *table, int size);

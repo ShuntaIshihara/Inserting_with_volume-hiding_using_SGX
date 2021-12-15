@@ -1,0 +1,3 @@
+ボリューム更新の平均CPU使用時間: -nanmicro s
+挿入の平均CPU使用時間: -nanmicro s
+全体の処理時間: -nanmicoro s

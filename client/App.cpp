@@ -76,7 +76,8 @@ int main(int argc, char *argv[]){
     auto sum = 0;
     auto sum_c = 0;
     auto sum_t = 0;
-
+    auto search_sum = 0;
+    auto sum_rr = 0;
 
 
 	//ソケットの生成
@@ -230,7 +231,9 @@ int main(int argc, char *argv[]){
     std::string line;
     int cnt = 0;
     int loop_cnt = 0;
-    int vc = 0;
+    long vc = 0;
+    long vc_v = 0;
+    long svc = 0;
     while(1) {
         int flag = 0;
         std::cout << "> ";
@@ -257,7 +260,7 @@ int main(int argc, char *argv[]){
             flag = 0;
         }
         send(sockfd, &flag, sizeof(int), 0);
-        vc += (int)sizeof(int);
+        vc += (long)sizeof(int);
         if (flag == 0) break;
 
         if (flag == 2) {
@@ -275,6 +278,7 @@ int main(int argc, char *argv[]){
 
 
             auto start_c = std::chrono::system_clock::now();
+            auto start_rr = std::chrono::system_clock::now();
 
             //randomized response
             std::vector<int> keys = randomized_response(0.5, id_list[key], id_list.size());
@@ -332,6 +336,7 @@ int main(int argc, char *argv[]){
             paillier_freeciphertext(ctxt0);
             free(byteEncryptedZero);
             keys0.clear();
+            auto end_rr = std::chrono::system_clock::now();
 
             //シリアライズ
             std::stringstream ss;
@@ -346,8 +351,10 @@ int main(int argc, char *argv[]){
             int bf_size = ss.str().size();
 
             send(sockfd, &bf_size, sizeof(int), 0);
-            vc += (int)sizeof(int);
+            vc_v += sizeof(int);
+            vc += (long)sizeof(int);
             send(sockfd, buffer, bf_size, 0);
+            vc_v += bf_size;
             vc += bf_size;
             cnt_list.clear();
 
@@ -363,6 +370,7 @@ int main(int argc, char *argv[]){
                 }
                 count += bytes;
             }while(count < (int)sizeof(int));
+            vc_v += count;
             vc += count;
 
             count = 0;
@@ -375,6 +383,7 @@ int main(int argc, char *argv[]){
                 }
                 count += bytes;
             }while(count < s);
+            vc_v += count;
             vc += count;
 
             //デシリアライズ
@@ -482,24 +491,176 @@ int main(int argc, char *argv[]){
             }
             auto end_t = std::chrono::system_clock::now(); 
             auto end = std::chrono::system_clock::now();
-            //end_all = time(NULL);
 
-            if (loop_cnt != 0) {
+            if (loop_cnt > 0){
                 sum += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
                 sum_c += std::chrono::duration_cast<std::chrono::milliseconds>(end_c-start_c).count();
                 sum_t += std::chrono::duration_cast<std::chrono::milliseconds>(end_t-start_t).count();
+                sum_rr += std::chrono::duration_cast<std::chrono::microseconds>(end_rr-start_rr).count();
+            }
+            std::cout << "ok" << std::endl;
+        }
+
+        if (flag == 1) {
+            /*----- Start search -----*/
+            auto search_start = std::chrono::system_clock::now(); 
+
+            // Request
+            // Send hash of key
+            std::string h = sha256(sha_ctx, key);
+            char c_h[65];
+            std::strcpy(c_h, h.c_str());
+            send(sockfd, c_h, 65, 0);
+            svc += 65;
+
+            // Recv vol
+            char byteEncryptedVol[256];
+            count = 0;
+            do {
+                bytes = recv(sockfd, byteEncryptedVol + count, sizeof(char)*256 - count, 0);
+                if (bytes < 0) {
+                    std::cerr << "Error: Recv 'byteEncryptedVol' failure." << std::endl;
+                    std::cerr << "Error Code: " << std::strerror(errno);
+                    return EXIT_FAILURE;
+                }
+                count += bytes;
+            } while (count < (int)sizeof(char)*256);
+            svc += count;
+
+            paillier_ciphertext_t* ctxt = paillier_ciphertext_from_bytes((void*)byteEncryptedVol, PAILLIER_BITS_TO_BYTES(pubKey->bits)*2);
+            paillier_plaintext_t* dec;
+            dec = paillier_dec(NULL, pubKey, secKey, ctxt);
+            int vol = mpz_get_si((mpz_srcptr)dec);
+            paillier_freeplaintext(dec);
+            paillier_freeciphertext(ctxt);
+
+
+            // Encrypt key
+            unsigned char *in_key = (unsigned char*)key.c_str();
+            unsigned char enc_key[256];
+            size_t enc_len = 0;
+            status = client_rsa_encrypt_sha256(pub_key, NULL, &enc_len, (const unsigned char*)in_key, (const size_t)(std::strlen((const char*)in_key)+1));
+            if (status != SUCCESS) {
+                std::cerr << "Error: encrypt search key." << std::endl;
+                client_err_print(status);
+                std::exit(EXIT_FAILURE);
+            }
+            if (enc_len == 256) {
+                status = client_rsa_encrypt_sha256(pub_key, enc_key, &enc_len, (const unsigned char*)in_key, (const size_t)(std::strlen((const char*)in_key)+1));
+                if (status != SUCCESS) {
+                    std::cerr << "Error: encrypt search key." << std::endl;
+                    client_err_print(status);
+                    return EXIT_FAILURE;
+                }
+            } else {
+                std::cerr << "Error: 'enc_len' is not 256." << std::endl;
+                return EXIT_FAILURE;
             }
 
-            loop_cnt++;
-            std::cout << "insertion pass" << std::endl;
+            send(sockfd, enc_key, enc_len, 0);
+            svc += enc_len;
+            send(sockfd, &vol, sizeof(int), 0);
+            svc += sizeof(int);
+            
+            // Get result
+            int bf_size;
+            count = 0;
+            do {
+                bytes = recv(sockfd, &bf_size + count, sizeof(int) - count, 0);
+                if (bytes < 0) {
+                    std::cerr << "Error: Recv 'bf_size' failure." << std::endl;
+                    std::cerr << "Error Code: " << std::strerror(errno);
+                    return EXIT_FAILURE;
+                }
+                count += bytes;
+            } while (count < (int)sizeof(int));
+            svc += sizeof(int);
+
+            char *bf = new char[bf_size];
+            count = 0;
+            do {
+                bytes = recv(sockfd, bf + count, bf_size - count, 0);
+                if (bytes < 0) {
+                    std::cerr << "Error: Recv 'bf' failure." << std::endl;
+                    std::cerr << "Error Code: " << std::strerror(errno);
+                    return EXIT_FAILURE;
+                }
+                count += bytes;
+            } while (count < bf_size);
+            svc += bf_size;
+
+            std::stringstream ss;
+            ss.write(bf, bf_size);
+
+            std::vector<SKV> ls;
+            cereal::PortableBinaryInputArchive i_archive(ss, cereal::PortableBinaryInputArchive::Options::LittleEndian());
+            i_archive(ls);
+
+            std::vector<std::string> rlts;
+            for (auto itr = ls.begin(); itr != ls.end(); ++itr) {
+                size_t dec_len = 0;
+                size_t key_len = sizeof(unsigned char)*256;
+                status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
+                (const unsigned char*)itr->key, (const size_t)key_len);
+                if (status != SUCCESS) {
+                    std::cerr << "Error: decrypt key failure." << std::endl;
+                    return EXIT_FAILURE;
+                }
+
+                unsigned char dec_key[dec_len];
+                status = client_rsa_decrypt_sha256(priv_key, dec_key, &dec_len,
+                        (const unsigned char*)itr->key, (const size_t)key_len);
+                if (status != SUCCESS) {
+                    std::cerr << "Error: decrypt key failure." << std::endl;
+                    return EXIT_FAILURE;
+                }
+
+                std::string k((const char*)dec_key);
+                if (k.find(key) != std::string::npos) {
+                    dec_len = 0;
+                    status = client_rsa_decrypt_sha256(priv_key, NULL, &dec_len,
+                            (const unsigned char*)itr->value, sizeof(unsigned char)*256);
+                    if (status != SUCCESS) {
+                        std::cerr << "Error: decrypt value failure." << std::endl;
+                        return EXIT_FAILURE;
+                    }
+
+                    unsigned char dec_val[dec_len];
+                    status = client_rsa_decrypt_sha256(priv_key, dec_val, &dec_len,
+                            (const unsigned char*)itr->value, sizeof(unsigned char)*256);
+                    if (status != SUCCESS) {
+                        std::cerr << "Error: decrypt value failure." << std::endl;
+                        return EXIT_FAILURE;
+                    }
+                    std::string v((const char*)dec_val);
+                    rlts.push_back(v);
+                }
+            }
+
+            std::cout << "key(" << key << ") = {" << std::endl;
+            for (auto itr = rlts.begin(); itr != rlts.end(); ++itr) {
+                std::cout << *itr << std::endl;
+            }
+            std::cout << "}" << std::endl;
+            auto search_end = std::chrono::system_clock::now(); 
+            if (loop_cnt > 0) {
+            search_sum += std::chrono::duration_cast<std::chrono::milliseconds>(search_end-search_start).count();
+            }
+
+            /*----- End search -----*/
         }
+        loop_cnt++;
     }
     std::cout << "end" << std::endl;
 
     double average_insertion = (double)sum_t / (loop_cnt-1);
     double average_volume = (double)sum_c / (loop_cnt-1);
     double average_all = (double)sum / (loop_cnt-1);
-    double ave_vol = (double)vc / (loop_cnt);
+    double average_rr = (double)sum_rr / (loop_cnt-1);
+    long ave_vol = vc / loop_cnt;
+    long ave_vc = vc_v / loop_cnt;
+    double ave_search = (double)search_sum/(loop_cnt-1);
+    long ave_svol = svc/loop_cnt;
 
     ofs << "ボリューム更新の平均処理時間(ms): ";
     ofs << std::to_string(average_volume) << std::endl;
@@ -507,11 +668,23 @@ int main(int argc, char *argv[]){
     ofs << "挿入の平均処理時間(ms): ";
     ofs << std::to_string(average_insertion) << std::endl;
 
-    ofs << "全体の平均処理時間(s): ";
+    ofs << "RRと0の選択にかかる時間(μs): ";
+    ofs << std::to_string(average_rr) << std::endl;
+
+    ofs << "ボリューム更新にかかる通信量(bytes): ";
+    ofs << std::to_string(ave_vc) << std::endl;
+
+    ofs << "全体の平均処理時間(ms): ";
     ofs << std::to_string(average_all) << std::endl;
 
-    ofs << "全体の通信量(bytes): ";
+    ofs << "挿入操作全体の通信量(bytes): ";
     ofs << std::to_string(ave_vol) << std::endl;
+
+    ofs << "検索時間 (ms): ";
+    ofs << std::to_string(ave_search) << std::endl;
+
+    ofs << "検索の通信量 (bytes): ";
+    ofs << std::to_string(ave_svol) << std::endl;
 
 
     //ソケットクローズ

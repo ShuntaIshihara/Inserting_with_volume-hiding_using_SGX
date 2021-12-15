@@ -35,6 +35,21 @@ typedef struct ms_ecall_hash_block_t {
 	int* ms_size;
 } ms_ecall_hash_block_t;
 
+typedef struct ms_ecall_get_block_t {
+	int ms_retval;
+	unsigned char* ms_enc_key;
+	int* ms_i;
+	int* ms_block_size;
+} ms_ecall_get_block_t;
+
+typedef struct ms_ecall_search_t {
+	struct keyvalue* ms_kvs;
+	struct keyvalue* ms_table;
+	size_t ms_t_size;
+	unsigned char* ms_enc_key;
+	int* ms_i;
+} ms_ecall_search_t;
+
 typedef struct ms_ocall_err_different_size_t {
 	const char* ms_str;
 } ms_ocall_err_different_size_t;
@@ -164,6 +179,31 @@ sgx_status_t ecall_hash_block(sgx_enclave_id_t eid, int* retval, unsigned char k
 	ms.ms_size = size;
 	status = sgx_ecall(eid, 4, &ocall_table_Enclave, &ms);
 	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
+	return status;
+}
+
+sgx_status_t ecall_get_block(sgx_enclave_id_t eid, int* retval, unsigned char enc_key[256], int* i, int* block_size)
+{
+	sgx_status_t status;
+	ms_ecall_get_block_t ms;
+	ms.ms_enc_key = (unsigned char*)enc_key;
+	ms.ms_i = i;
+	ms.ms_block_size = block_size;
+	status = sgx_ecall(eid, 5, &ocall_table_Enclave, &ms);
+	if (status == SGX_SUCCESS && retval) *retval = ms.ms_retval;
+	return status;
+}
+
+sgx_status_t ecall_search(sgx_enclave_id_t eid, struct keyvalue kvs[2], struct keyvalue* table, size_t t_size, unsigned char enc_key[256], int* i)
+{
+	sgx_status_t status;
+	ms_ecall_search_t ms;
+	ms.ms_kvs = (struct keyvalue*)kvs;
+	ms.ms_table = table;
+	ms.ms_t_size = t_size;
+	ms.ms_enc_key = (unsigned char*)enc_key;
+	ms.ms_i = i;
+	status = sgx_ecall(eid, 6, &ocall_table_Enclave, &ms);
 	return status;
 }
 
