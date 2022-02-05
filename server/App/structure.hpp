@@ -1,4 +1,5 @@
-#pragma once 
+#ifndef _STRUCTURE_HPP
+#define _STRUCTURE_HPP
 
 #include <gmp.h>
 #include "paillier.h"
@@ -23,3 +24,5 @@ typedef struct {
         archive(key, value);
     }
 }SKV;
+
+#endif //  _STRUCTURE_HPP

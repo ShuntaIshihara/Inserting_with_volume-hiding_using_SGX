@@ -75,7 +75,8 @@ else
 endif
 
 # App_Cpp_Files := App/App.cpp $(wildcard App/Edger8rSyntax/*.cpp) $(wildcard App/TrustedLibrary/*.cpp)
-App_Cpp_Files := App/App.cpp App/error_print.cpp App/deserialize.cpp App/getKey.cpp
+App_Cpp_Files := App/App.cpp App/error_print.cpp App/deserialize.cpp App/getKey.cpp \
+App/Init_Enclave.cpp App/Init.cpp App/Ocall_Func.cpp
 # App_Include_Paths := -IInclude -IApp -I$(SGX_SDK)/include
 App_Include_Paths := -IApp -I$(SGX_SDK)/include -I/home/kdeprivacy/cereal-1.3.0/include
 
