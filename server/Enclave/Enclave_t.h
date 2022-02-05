@@ -24,7 +24,7 @@ typedef struct keyvalue {
 #endif
 
 void ecall_generate_keys(unsigned char n[256], unsigned char d[256], unsigned char p[256], unsigned char q[256], unsigned char dmp1[256], unsigned char dmq1[256], unsigned char iqmp[256], long int* e);
-void ecall_encrypt(unsigned char t_data[256], unsigned char* data);
+void ecall_encrypt(unsigned char enc[256], unsigned char* data);
 void ecall_decrypt(unsigned char dec[256], unsigned char enc[256]);
 void ecall_insertion_start(struct keyvalue* table, size_t t_size, struct keyvalue* data);
 int ecall_hash_block(unsigned char key[256], int* size);

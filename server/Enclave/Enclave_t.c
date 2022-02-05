@@ -39,7 +39,7 @@ typedef struct ms_ecall_generate_keys_t {
 } ms_ecall_generate_keys_t;
 
 typedef struct ms_ecall_encrypt_t {
-	unsigned char* ms_t_data;
+	unsigned char* ms_enc;
 	unsigned char* ms_data;
 	size_t ms_data_len;
 } ms_ecall_encrypt_t;
@@ -360,14 +360,14 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt(void* pms)
 	sgx_lfence();
 	ms_ecall_encrypt_t* ms = SGX_CAST(ms_ecall_encrypt_t*, pms);
 	sgx_status_t status = SGX_SUCCESS;
-	unsigned char* _tmp_t_data = ms->ms_t_data;
-	size_t _len_t_data = 256 * sizeof(unsigned char);
-	unsigned char* _in_t_data = NULL;
+	unsigned char* _tmp_enc = ms->ms_enc;
+	size_t _len_enc = 256 * sizeof(unsigned char);
+	unsigned char* _in_enc = NULL;
 	unsigned char* _tmp_data = ms->ms_data;
 	size_t _len_data = ms->ms_data_len ;
 	unsigned char* _in_data = NULL;
 
-	CHECK_UNIQUE_POINTER(_tmp_t_data, _len_t_data);
+	CHECK_UNIQUE_POINTER(_tmp_enc, _len_enc);
 	CHECK_UNIQUE_POINTER(_tmp_data, _len_data);
 
 	//
@@ -375,19 +375,19 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt(void* pms)
 	//
 	sgx_lfence();
 
-	if (_tmp_t_data != NULL && _len_t_data != 0) {
-		if ( _len_t_data % sizeof(*_tmp_t_data) != 0)
+	if (_tmp_enc != NULL && _len_enc != 0) {
+		if ( _len_enc % sizeof(*_tmp_enc) != 0)
 		{
 			status = SGX_ERROR_INVALID_PARAMETER;
 			goto err;
 		}
-		_in_t_data = (unsigned char*)malloc(_len_t_data);
-		if (_in_t_data == NULL) {
+		_in_enc = (unsigned char*)malloc(_len_enc);
+		if (_in_enc == NULL) {
 			status = SGX_ERROR_OUT_OF_MEMORY;
 			goto err;
 		}
 
-		if (memcpy_s(_in_t_data, _len_t_data, _tmp_t_data, _len_t_data)) {
+		if (memcpy_s(_in_enc, _len_enc, _tmp_enc, _len_enc)) {
 			status = SGX_ERROR_UNEXPECTED;
 			goto err;
 		}
@@ -413,16 +413,16 @@ static sgx_status_t SGX_CDECL sgx_ecall_encrypt(void* pms)
 		}
 	}
 
-	ecall_encrypt(_in_t_data, _in_data);
-	if (_in_t_data) {
-		if (memcpy_s(_tmp_t_data, _len_t_data, _in_t_data, _len_t_data)) {
+	ecall_encrypt(_in_enc, _in_data);
+	if (_in_enc) {
+		if (memcpy_s(_tmp_enc, _len_enc, _in_enc, _len_enc)) {
 			status = SGX_ERROR_UNEXPECTED;
 			goto err;
 		}
 	}
 
 err:
-	if (_in_t_data) free(_in_t_data);
+	if (_in_enc) free(_in_enc);
 	if (_in_data) free(_in_data);
 	return status;
 }

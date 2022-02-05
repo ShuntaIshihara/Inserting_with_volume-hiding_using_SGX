@@ -13,7 +13,7 @@ typedef struct ms_ecall_generate_keys_t {
 } ms_ecall_generate_keys_t;
 
 typedef struct ms_ecall_encrypt_t {
-	unsigned char* ms_t_data;
+	unsigned char* ms_enc;
 	unsigned char* ms_data;
 	size_t ms_data_len;
 } ms_ecall_encrypt_t;
@@ -139,11 +139,11 @@ sgx_status_t ecall_generate_keys(sgx_enclave_id_t eid, unsigned char n[256], uns
 	return status;
 }
 
-sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, unsigned char t_data[256], unsigned char* data)
+sgx_status_t ecall_encrypt(sgx_enclave_id_t eid, unsigned char enc[256], unsigned char* data)
 {
 	sgx_status_t status;
 	ms_ecall_encrypt_t ms;
-	ms.ms_t_data = (unsigned char*)t_data;
+	ms.ms_enc = (unsigned char*)enc;
 	ms.ms_data = data;
 	ms.ms_data_len = data ? strlen(data) + 1 : 0;
 	status = sgx_ecall(eid, 1, &ocall_table_Enclave, &ms);
